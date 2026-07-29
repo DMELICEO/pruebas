@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <!-- El zoom está desactivado por defecto en la app -->
+    <meta name="viewport" id="viewport-meta" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Estudio PDF - Organizador</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf_viewer.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+</head>
+<body>
+
+    <!-- APLICACIÓN PRINCIPAL -->
+    <div id="main-app">
+        <header class="app-header">
+            <h1>Mi Estudio</h1>
+        </header>
+
+        <main class="app-content">
+            <!-- SECCIÓN DE PDFs -->
+            <section id="pdf-section" class="active-section">
+                <div class="pdf-toolbar">
+                    <label for="pdf-upload" class="upload-btn">+ Cargar PDFs</label>
+                    <input type="file" id="pdf-upload" accept="application/pdf" multiple hidden>
+                    
+                    <div class="view-toggles">
+                        <button id="btnGrid" class="active">Cuadrícula</button>
+                        <button id="btnList">Lista</button>
+                    </div>
+                </div>
+                <div id="pdf-container" class="pdf-grid"></div>
+            </section>
+
+            <!-- SECCIÓN DE CALENDARIO -->
+            <section id="calendar-section" class="hidden-section">
+                <div class="calendar-header">
+                    <button id="prev-month" class="month-nav">&lt;</button>
+                    <h2 id="month-year"></h2>
+                    <button id="next-month" class="month-nav">&gt;</button>
+                </div>
+                <div class="calendar-grid" id="calendar"></div>
+            </section>
+        </main>
+
+        <nav class="bottom-nav">
+            <button id="nav-pdfs" class="active">Archivos</button>
+            <button id="nav-calendar">Calendario</button>
+        </nav>
+    </div>
+
+    <!-- PANTALLA DE LECTURA DE PDF -->
+    <div id="reader-screen" class="hidden-section">
+        <!-- Barra superior -->
+        <div class="reader-header">
+            <button id="close-reader" class="btn-icon">←</button>
+            <div id="pdf-title" class="full-title">Cargando...</div>
+            <button id="lock-page" class="btn-icon">🔒</button>
+        </div>
+        
+        <!-- Visor PDF (Swipe funciona aquí) -->
+        <div class="reader-body" id="viewer-container">
+            <div id="page-wrapper" class="page-wrapper">
+                <canvas id="pdf-render"></canvas>
+                <div id="text-layer" class="textLayer"></div>
+            </div>
+        </div>
+        
+        <!-- Herramientas flotantes y discretas -->
+        <div class="reader-floating-bottom">
+            <button id="undo-highlight" class="btn-fab bg-white shadow">↩️</button>
+            <div class="page-badge"><span id="page-num">1</span> / <span id="page-count">--</span></div>
+            <button id="highlight-tool" class="btn-fab bg-blue shadow">🖍️</button>
+        </div>
+
+        <!-- Botón para salir del modo concentración -->
+        <button id="unlock-page" class="btn-pill hidden-element">🔓 Salir del modo enfoque</button>
+    </div>
+
+    <!-- MODAL ELEGANTE PARA EL CALENDARIO -->
+    <div id="note-modal" class="custom-modal hidden-section">
+        <div class="custom-modal-content">
+            <h3 id="note-modal-title">Día</h3>
+            <div id="note-display" class="note-text-large"></div>
+            <textarea id="note-input" rows="4" placeholder="¿Qué PDF estudiarás este día?"></textarea>
+            
+            <div class="custom-modal-actions">
+                <button id="btn-close-note" class="btn-text text-red">Cerrar</button>
+                <button id="btn-edit-note" class="btn-text text-blue">Editar</button>
+                <button id="btn-save-note" class="btn-text text-blue" style="font-weight:bold;">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
