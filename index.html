@@ -2,87 +2,1217 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" id="viewport-meta" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Estudio PDF - Organizador</title>
-    <link rel="stylesheet" href="styles.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
-</head>
-<body>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Menú Financiero Interactivo</title>
+    
+    <!-- CONFIGURACIÓN PARA PANTALLA DE INICIO (WEB APP) -->
+    <meta name="theme-color" content="#007550">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Mi Cuota">
+    
+    <!-- Íconos para la pantalla de inicio -->
+    <link rel="icon" type="image/png" sizes="192x192" href="logo.png">
+    <link rel="apple-touch-icon" href="logo.png">
 
-    <!-- APLICACIÓN PRINCIPAL (Intacta) -->
-    <div id="main-app">
-        <header class="app-header">
-            <h1>Mi Estudio</h1>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#007550',
+                        primaryHover: '#00593c',
+                        secondary: '#bed63f',
+                        white: '#FFFFFF',
+                        dark: '#1e293b',
+                        grayLight: '#f8fafc',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { 
+            background-color: #f1f5f9; 
+            color: #1e293b;
+            -webkit-tap-highlight-color: transparent;
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .active-tab {
+            background-color: #bed63f;
+            color: #007550;
+            font-weight: 700;
+        }
+        .toggle-btn-active {
+            background-color: #007550;
+            color: #FFFFFF;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .overlay { background-color: rgba(15, 23, 42, 0.5); backdrop-filter: blur(4px); }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden text-sm md:text-base">
+
+    <!-- OVERLAY MÓVIL Y ESCRITORIO -->
+    <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 z-40 overlay hidden transition-opacity"></div>
+
+    <!-- SIDEBAR / BARRA LATERAL (SIEMPRE DESPLEGABLE) -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-secondary/30 transform -translate-x-full transition-transform duration-300 flex flex-col shadow-2xl rounded-r-3xl">
+        <div class="p-8 flex justify-between items-center">
+            <div class="flex items-center gap-3 text-primary">
+                <h1 class="text-2xl font-black tracking-tight">Menú</h1>
+            </div>
+            <button onclick="toggleSidebar()" class="text-gray-400 hover:text-primary text-2xl p-2"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <nav class="flex-1 px-4 py-2 space-y-2 overflow-y-auto">
+            <button onclick="switchTab('calc')" id="btn-calc" class="w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-left font-medium text-gray-500 hover:bg-secondary/30 transition active-tab tab-btn">
+                <i class="fa-solid fa-calculator text-xl w-6 text-center"></i>
+                <span>Calculador de Cuota</span>
+            </button>
+
+            <button onclick="switchTab('descuentos')" id="btn-descuentos" class="w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-left font-medium text-gray-500 hover:bg-secondary/30 transition tab-btn">
+                <i class="fa-solid fa-file-invoice-dollar text-xl w-6 text-center"></i>
+                <span>Deducciones</span>
+            </button>
+
+            <button onclick="switchTab('doc-hipo')" id="btn-doc-hipo" class="w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-left font-medium text-gray-500 hover:bg-secondary/30 transition tab-btn">
+                <i class="fa-solid fa-folder-open text-xl w-6 text-center"></i>
+                <span>Doc. Hipotecarios</span>
+            </button>
+
+            <button onclick="switchTab('doc-personas')" id="btn-doc-personas" class="w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-left font-medium text-gray-500 hover:bg-secondary/30 transition tab-btn">
+                <i class="fa-solid fa-users text-xl w-6 text-center"></i>
+                <span>Doc. Personales</span>
+            </button>
+
+            <button onclick="switchTab('extras')" id="btn-extras" class="w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-left font-medium text-gray-500 hover:bg-secondary/30 transition tab-btn">
+                <i class="fa-solid fa-calendar-days text-xl w-6 text-center"></i>
+                <span>Extras</span>
+            </button>
+        </nav>
+    </aside>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="flex-1 flex flex-col overflow-hidden bg-grayLight relative">
+        
+        <!-- HEADER (VISIBLE EN TODAS LAS PANTALLAS) -->
+        <header class="flex items-center p-5 bg-white shadow-sm z-30 rounded-b-3xl">
+            <button onclick="toggleSidebar()" class="text-2xl text-primary p-2 bg-secondary/30 rounded-xl focus:outline-none hover:bg-secondary/50 transition">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            <h2 class="ml-4 font-bold text-lg text-primary" id="mobile-title">Calculador de Cuota</h2>
         </header>
 
-        <main class="app-content">
-            <section id="pdf-section" class="active-section">
-                <div class="pdf-toolbar">
-                    <label for="pdf-upload" class="upload-btn">+ Cargar PDFs</label>
-                    <input type="file" id="pdf-upload" accept="application/pdf" multiple hidden>
+        <div class="flex-1 overflow-y-auto p-4 md:p-10 pb-24 scroll-smooth">
+            
+            <!-- SECCIÓN 1: CALCULADOR DE CUOTA -->
+            <section id="tab-calc" class="tab-content max-w-3xl mx-auto">
+                <div class="bg-white p-5 md:p-12 rounded-[2rem] md:rounded-[2.5rem] shadow-xl shadow-black/5 border border-secondary/20">
+                    <h2 class="hidden md:block text-4xl font-extrabold text-primary mb-10 tracking-tight">Calculador de Cuota</h2>
                     
-                    <div class="view-toggles">
-                        <button id="btnGrid" class="active">Cuadrícula</button>
-                        <button id="btnList">Lista</button>
+                    <div class="space-y-8">
+                        <div class="relative group">
+                            <label class="block text-sm uppercase tracking-widest text-gray-400 font-bold mb-3 pl-2 transition group-focus-within:text-primary">Monto del Crédito</label>
+                            <div class="relative bg-grayLight rounded-3xl overflow-hidden border-2 border-transparent transition-all group-focus-within:border-primary group-focus-within:bg-white group-focus-within:shadow-lg">
+                                <span class="absolute inset-y-0 left-0 pl-6 flex items-center text-primary font-bold text-2xl">$</span>
+                                <input type="text" inputmode="decimal" id="monto" value="" placeholder="0.00" oninput="formatRealTime(this); calcularCuota()" class="w-full pl-12 pr-6 py-5 bg-transparent text-2xl font-bold text-dark focus:outline-none">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div class="relative group">
+                                <label class="block text-sm uppercase tracking-widest text-gray-400 font-bold mb-3 pl-2 transition group-focus-within:text-primary">Plazo (Años.Meses)</label>
+                                <input type="text" inputmode="decimal" id="plazo" value="" placeholder="0.0" oninput="calcularCuota()" class="w-full px-6 py-4 rounded-3xl bg-grayLight border-2 border-transparent font-semibold text-lg text-dark transition-all focus:border-primary focus:bg-white focus:shadow-lg focus:outline-none">
+                                <p class="text-sm text-primary mt-3 pl-2 font-semibold flex items-center gap-2"><i class="fa-solid fa-clock"></i> <span id="meses-info">0 meses en total</span></p>
+                            </div>
+
+                            <div class="relative group">
+                                <label class="block text-sm uppercase tracking-widest text-gray-400 font-bold mb-3 pl-2 transition group-focus-within:text-primary">Interés Anual (%)</label>
+                                <div class="relative bg-grayLight rounded-3xl overflow-hidden border-2 border-transparent transition-all group-focus-within:border-primary group-focus-within:bg-white group-focus-within:shadow-lg">
+                                    <input type="text" inputmode="decimal" id="interes" value="" placeholder="0.00" oninput="formatRealTime(this); calcularCuota()" class="w-full pr-12 pl-6 py-4 bg-transparent font-semibold text-lg text-dark focus:outline-none">
+                                    <span class="absolute inset-y-0 right-0 pr-6 flex items-center text-gray-400 font-bold">%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- OPCIONES AVANZADAS / HIPOTECARIAS -->
+                        <div class="mt-8 pt-6 border-t border-secondary/30">
+                            <button onclick="toggleOpcionesHipotecarias()" id="btn-toggle-hipo" class="w-full md:w-auto flex items-center justify-between md:justify-start gap-3 px-6 py-4 bg-grayLight hover:bg-secondary/20 rounded-2xl text-primary font-bold transition">
+                                <div class="flex items-center gap-3">
+                                    <i class="fa-solid fa-house-chimney"></i>
+                                    <span>Opciones de Crédito Hipotecario</span>
+                                </div>
+                                <i class="fa-solid fa-chevron-down transition-transform duration-300" id="icon-toggle-hipo"></i>
+                            </button>
+                            
+                            <div id="opciones-hipotecarias" class="hidden mt-6 space-y-6">
+                                <!-- Seguro de Residencia -->
+                                <div class="bg-grayLight p-5 md:p-6 rounded-[2rem] border-2 border-secondary/30 transition-all hover:border-primary/30">
+                                    <label class="inline-flex items-center cursor-pointer mb-4">
+                                        <input type="checkbox" id="chk-seguro-residencia" onchange="calcularCuota()" class="w-5 h-5 rounded text-primary focus:ring-primary">
+                                        <span class="ml-3 font-bold text-dark">Añadir Seguro de Residencia a la Cuota</span>
+                                    </label>
+                                    
+                                    <div id="box-seguro-residencia" class="hidden mt-2">
+                                        <div>
+                                            <label class="block text-xs uppercase text-gray-500 font-bold mb-2">Valor de la Construcción ($)</label>
+                                            <input type="text" inputmode="decimal" id="valor-construccion" placeholder="0.00" oninput="formatRealTime(this); calcularCuota()" class="w-full px-4 py-3 rounded-xl bg-white border-2 border-transparent focus:border-primary focus:outline-none font-bold text-dark">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Monto Base Cancelación -->
+                                <div class="bg-grayLight p-5 md:p-6 rounded-[2rem] border-2 border-secondary/30 transition-all hover:border-primary/30">
+                                    <label class="block text-sm font-bold text-dark mb-2">Monto Específico para Cancelación de Hipoteca ($)</label>
+                                    <p class="text-xs text-gray-500 mb-3">Si dejas este campo vacío, la pestaña "Deducciones" usará el monto principal del crédito.</p>
+                                    <input type="text" inputmode="decimal" id="monto-cancelacion-base" placeholder="Ej: 25000.00" oninput="formatRealTime(this); recalcularDescuentos()" class="w-full md:w-1/2 px-4 py-3 rounded-xl bg-white border-2 border-transparent focus:border-primary focus:outline-none font-bold text-dark">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-10 p-5 md:p-8 rounded-[2rem] bg-gradient-to-br from-secondary/20 to-white border border-secondary/30 shadow-inner">
+                            <div class="space-y-5">
+                                <div class="flex justify-between items-center text-gray-500 font-medium px-2">
+                                    <span>Cuota Base</span>
+                                    <span id="res-cuota-base" class="text-xl text-dark">$0.00</span>
+                                </div>
+                                <div class="flex justify-between items-center text-gray-500 font-medium px-2">
+                                    <span>Seguro (0.1%)</span>
+                                    <span id="res-seguro" class="text-xl text-dark">$0.00</span>
+                                </div>
+                                <div class="flex justify-between items-center text-gray-500 font-medium px-2 hidden transition-all" id="row-res-seguro-residencia">
+                                    <span>Seg. Residencia</span>
+                                    <span id="res-seguro-residencia" class="text-xl text-dark">$0.00</span>
+                                </div>
+                                <div class="flex justify-between items-center pt-6 mt-2 border-t border-gray-200 px-2">
+                                    <span class="text-lg font-black uppercase tracking-wider text-primary">Total Cuota</span>
+                                    <span id="res-total-cuota" class="text-3xl md:text-4xl font-black text-primary drop-shadow-sm">$0.00</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div id="pdf-container" class="pdf-grid"></div>
             </section>
 
-            <section id="calendar-section" class="hidden-section">
-                <div class="calendar-header">
-                    <button id="prev-month" class="month-nav">&lt;</button>
-                    <h2 id="month-year"></h2>
-                    <button id="next-month" class="month-nav">&gt;</button>
+            <!-- SECCIÓN 2: DEDUCCIONES -->
+            <section id="tab-descuentos" class="tab-content hidden max-w-5xl mx-auto">
+                <div class="bg-white p-5 md:p-10 rounded-[2rem] md:rounded-[2.5rem] shadow-xl shadow-black/5 border border-secondary/20">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
+                        <div>
+                            <h2 class="text-3xl font-extrabold text-primary tracking-tight">Deducciones</h2>
+                            <p class="text-gray-600 mt-2 font-medium bg-secondary/30 inline-block px-4 py-1.5 rounded-full">Calculado para: <strong id="desc-monto-ref" class="text-primary">$0.00</strong></p>
+                        </div>
+                        <button onclick="reiniciarDescuentos()" class="w-full md:w-auto px-6 py-3 bg-grayLight hover:bg-secondary/40 text-primary font-bold rounded-2xl transition flex items-center justify-center gap-2 border border-secondary/30">
+                            <i class="fa-solid fa-rotate-left"></i> Restablecer
+                        </button>
+                    </div>
+
+                    <!-- TOGGLE DE TIPO DE CRÉDITO -->
+                    <div class="flex p-1.5 bg-grayLight rounded-2xl w-full max-w-md mx-auto md:mx-0 mb-8 border border-secondary/20 relative">
+                        <button id="btn-tipo-hipotecaria" onclick="cambiarTipoDeduccion('hipotecaria')" class="flex-1 py-3 text-sm font-bold rounded-xl transition-all toggle-btn-active">
+                            Hipotecaria
+                        </button>
+                        <button id="btn-tipo-personal" onclick="cambiarTipoDeduccion('personal')" class="flex-1 py-3 text-sm font-bold text-gray-400 hover:text-primary rounded-xl transition-all">
+                            Personal
+                        </button>
+                    </div>
+
+                    <!-- LISTA DE DEDUCCIONES FLEXIBLE -->
+                    <div class="bg-white border border-secondary/30 rounded-3xl overflow-hidden shadow-sm">
+                        
+                        <!-- Encabezado Desktop -->
+                        <div class="hidden md:flex bg-grayLight text-xs text-gray-500 uppercase tracking-widest border-b border-secondary/30">
+                            <div class="p-5 font-bold w-2/5">Concepto</div>
+                            <div class="p-5 font-bold text-center w-2/5">Referencia</div>
+                            <div class="p-5 font-bold text-right w-1/5">Monto ($)</div>
+                        </div>
+
+                        <!-- Contenedor de Filas -->
+                        <div class="divide-y divide-secondary/20 bg-white" id="tabla-deducciones">
+                            
+                            <!-- 1. ESTUDIO CREDITICIO (AMBOS) -->
+                            <div class="flex flex-col md:flex-row items-start md:items-center p-4 md:p-5 gap-3 md:gap-0 hover:bg-grayLight/50 transition group row-ambos">
+                                <div class="w-full md:w-2/5 flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-secondary/40 flex items-center justify-center text-primary flex-shrink-0"><i class="fa-solid fa-magnifying-glass-chart"></i></div>
+                                    <span class="font-bold text-gray-700">Estudio Crediticio / Comisión</span>
+                                </div>
+                                <div class="w-full md:w-2/5 flex flex-col md:items-center justify-start md:justify-center pl-[52px] md:pl-0 gap-2">
+                                    <button onclick="abrirModal('estudio')" class="text-primary hover:text-primaryHover bg-secondary/30 hover:bg-secondary/60 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 w-fit">
+                                        <i class="fa-solid fa-table-list"></i> Ver Tabla
+                                    </button>
+                                </div>
+                                <div class="w-full md:w-1/5 flex justify-between md:justify-end items-center pl-[52px] md:pl-0 mt-1 md:mt-0">
+                                    <span class="text-xs text-gray-400 font-bold md:hidden uppercase tracking-wider">Monto:</span>
+                                    <div class="flex justify-end items-center gap-3">
+                                        <span id="txt-estudio" class="text-lg font-medium text-gray-700"></span>
+                                        <button id="btn-estudio" onclick="activarEdicion('estudio')" class="w-8 h-8 rounded-full bg-secondary/40 md:bg-transparent md:hover:bg-secondary/50 text-primary transition flex items-center justify-center shadow-sm md:shadow-none opacity-100 md:opacity-0 group-hover:opacity-100"><i class="fa-solid fa-pen text-xs"></i></button>
+                                        <input type="text" inputmode="decimal" id="desc-estudio" class="hidden w-28 text-right p-2 border-2 border-primary rounded-xl bg-white font-bold text-gray-700" oninput="formatRealTime(this); calcularTotalDescuentos()">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 2. BURO (AMBOS) -->
+                            <div class="flex flex-col md:flex-row items-start md:items-center p-4 md:p-5 gap-3 md:gap-0 hover:bg-grayLight/50 transition group row-ambos">
+                                <div class="w-full md:w-2/5 flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-secondary/40 flex items-center justify-center text-primary flex-shrink-0"><i class="fa-solid fa-id-card"></i></div>
+                                    <span class="font-bold text-gray-700">Consulta de Buró</span>
+                                </div>
+                                <div class="w-full md:w-2/5 flex items-center justify-start md:justify-center pl-[52px] md:pl-0 gap-2">
+                                    <span class="text-xs text-gray-400 font-bold uppercase">Personas:</span>
+                                    <input type="tel" id="num-personas-buro" value="" placeholder="1" min="1" class="w-14 p-1.5 border-2 border-secondary/50 rounded-lg text-center bg-white focus:border-primary focus:outline-none font-bold" oninput="recalcularDescuentos()">
+                                </div>
+                                <div class="w-full md:w-1/5 flex justify-between md:justify-end items-center pl-[52px] md:pl-0 mt-1 md:mt-0">
+                                    <span class="text-xs text-gray-400 font-bold md:hidden uppercase tracking-wider">Monto:</span>
+                                    <div class="flex justify-end items-center gap-3">
+                                        <span id="txt-buro" class="text-lg font-medium text-gray-700"></span>
+                                        <button id="btn-buro" onclick="activarEdicion('buro')" class="w-8 h-8 rounded-full bg-secondary/40 md:bg-transparent md:hover:bg-secondary/50 text-primary transition flex items-center justify-center shadow-sm md:shadow-none opacity-100 md:opacity-0 group-hover:opacity-100"><i class="fa-solid fa-pen text-xs"></i></button>
+                                        <input type="text" inputmode="decimal" id="desc-buro" class="hidden w-28 text-right p-2 border-2 border-primary rounded-xl bg-white font-bold text-gray-700" oninput="formatRealTime(this); calcularTotalDescuentos()">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 3. MUTUO PERSONAL (SOLO PERSONAL) -->
+                            <div class="flex flex-col md:flex-row items-start md:items-center p-4 md:p-5 gap-3 md:gap-0 hover:bg-grayLight/50 transition group row-personal hidden">
+                                <div class="w-full md:w-2/5 flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-secondary/40 flex items-center justify-center text-primary flex-shrink-0"><i class="fa-solid fa-file-signature"></i></div>
+                                    <span class="font-bold text-gray-700">Mutuo Personal</span>
+                                </div>
+                                <div class="w-full md:w-2/5 flex flex-col md:items-center justify-start md:justify-center pl-[52px] md:pl-0 gap-2">
+                                    <button onclick="abrirModal('mutuo_personal')" class="text-primary hover:text-primaryHover bg-secondary/30 hover:bg-secondary/60 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 w-fit">
+                                        <i class="fa-solid fa-table-list"></i> Tabla Referencia
+                                    </button>
+                                </div>
+                                <div class="w-full md:w-1/5 flex justify-between md:justify-end items-center pl-[52px] md:pl-0 mt-1 md:mt-0">
+                                    <span class="text-xs text-gray-400 font-bold md:hidden uppercase tracking-wider">Monto:</span>
+                                    <div class="flex justify-end items-center gap-3">
+                                        <span id="txt-mutuo_personal" class="text-lg font-medium text-gray-700"></span>
+                                        <button id="btn-mutuo_personal" onclick="activarEdicion('mutuo_personal')" class="w-8 h-8 rounded-full bg-secondary/40 md:bg-transparent md:hover:bg-secondary/50 text-primary transition flex items-center justify-center shadow-sm md:shadow-none opacity-100 md:opacity-0 group-hover:opacity-100"><i class="fa-solid fa-pen text-xs"></i></button>
+                                        <input type="text" inputmode="decimal" id="desc-mutuo_personal" class="hidden w-28 text-right p-2 border-2 border-primary rounded-xl bg-white font-bold text-gray-700" oninput="formatRealTime(this); calcularTotalDescuentos()">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 4. CANCELACIÓN HIPOTECA (SOLO HIPOTECARIA) -->
+                            <div class="flex flex-col md:flex-row items-start md:items-center p-4 md:p-5 gap-3 md:gap-0 hover:bg-grayLight/50 transition group row-hipotecaria">
+                                <div class="w-full md:w-2/5 flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-secondary/40 flex items-center justify-center text-primary flex-shrink-0"><i class="fa-solid fa-house-circle-xmark"></i></div>
+                                    <span class="font-bold text-gray-700">Cancelación de Hipoteca</span>
+                                </div>
+                                <div class="w-full md:w-2/5 flex flex-col md:items-center justify-start md:justify-center pl-[52px] md:pl-0 gap-2">
+                                    <button onclick="abrirModal('cancelacion_hipoteca')" class="text-primary hover:text-primaryHover bg-secondary/30 hover:bg-secondary/60 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 w-fit">
+                                        <i class="fa-solid fa-table-list"></i> Tabla Referencia
+                                    </button>
+                                    <label class="inline-flex items-center cursor-pointer w-fit">
+                                        <input type="checkbox" id="chk-cancelacion" onchange="recalcularDescuentos()" class="w-4 h-4 rounded text-primary focus:ring-primary">
+                                        <span class="ml-2 text-sm text-gray-500 font-bold">Aplicar</span>
+                                    </label>
+                                </div>
+                                <div class="w-full md:w-1/5 flex justify-between md:justify-end items-center pl-[52px] md:pl-0 mt-1 md:mt-0">
+                                    <span class="text-xs text-gray-400 font-bold md:hidden uppercase tracking-wider">Monto:</span>
+                                    <div class="flex justify-end items-center gap-3">
+                                        <span id="txt-cancelacion" class="text-lg font-medium text-gray-700"></span>
+                                        <button id="btn-cancelacion" onclick="activarEdicion('cancelacion')" class="w-8 h-8 rounded-full bg-secondary/40 md:bg-transparent md:hover:bg-secondary/50 text-primary transition flex items-center justify-center shadow-sm md:shadow-none opacity-100 md:opacity-0 group-hover:opacity-100"><i class="fa-solid fa-pen text-xs"></i></button>
+                                        <input type="text" inputmode="decimal" id="desc-cancelacion" class="hidden w-28 text-right p-2 border-2 border-primary rounded-xl bg-white font-bold text-gray-700" oninput="formatRealTime(this); calcularTotalDescuentos()">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 5. DERECHO POR CANCELACIÓN DE HIPOTECA (SOLO HIPOTECARIA) -->
+                            <div class="flex flex-col md:flex-row items-start md:items-center p-4 md:p-5 gap-3 md:gap-0 hover:bg-grayLight/50 transition group row-hipotecaria">
+                                <div class="w-full md:w-2/5 flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-secondary/40 flex items-center justify-center text-primary flex-shrink-0"><i class="fa-solid fa-file-invoice"></i></div>
+                                    <span class="font-bold text-gray-700">Derecho por Cancelación de Hipoteca</span>
+                                </div>
+                                <div class="w-full md:w-2/5 flex items-center justify-start md:justify-center pl-[52px] md:pl-0">
+                                    <label class="inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="chk-derecho-canc" onchange="recalcularDescuentos()" class="w-4 h-4 rounded text-primary focus:ring-primary">
+                                        <span class="ml-2 text-xs text-gray-500 font-bold uppercase">Aplicar Cálculo</span>
+                                    </label>
+                                </div>
+                                <div class="w-full md:w-1/5 flex justify-between md:justify-end items-center pl-[52px] md:pl-0 mt-1 md:mt-0">
+                                    <span class="text-xs text-gray-400 font-bold md:hidden uppercase tracking-wider">Monto:</span>
+                                    <div class="flex justify-end items-center gap-3">
+                                        <span id="txt-derechocanc" class="text-lg font-medium text-gray-700"></span>
+                                        <button id="btn-derechocanc" onclick="activarEdicion('derechocanc')" class="w-8 h-8 rounded-full bg-secondary/40 md:bg-transparent md:hover:bg-secondary/50 text-primary transition flex items-center justify-center shadow-sm md:shadow-none opacity-100 md:opacity-0 group-hover:opacity-100"><i class="fa-solid fa-pen text-xs"></i></button>
+                                        <input type="text" inputmode="decimal" id="desc-derechocanc" class="hidden w-28 text-right p-2 border-2 border-primary rounded-xl bg-white font-bold text-gray-700" oninput="formatRealTime(this); calcularTotalDescuentos()">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 6. GASTOS REGISTRALES (SOLO HIPOTECARIA) -->
+                            <div class="flex flex-col md:flex-row items-start md:items-center p-4 md:p-5 gap-3 md:gap-0 hover:bg-grayLight/50 transition group row-hipotecaria">
+                                <div class="w-full md:w-2/5 flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-secondary/40 flex items-center justify-center text-primary flex-shrink-0"><i class="fa-solid fa-stamp"></i></div>
+                                    <span class="font-bold text-gray-700">Gastos Registrales</span>
+                                </div>
+                                <div class="w-full md:w-2/5 flex items-center justify-start md:justify-center pl-[52px] md:pl-0">
+                                    <span class="text-xs text-gray-400 font-bold uppercase">$3.80 por c/ $1,000</span>
+                                </div>
+                                <div class="w-full md:w-1/5 flex justify-between md:justify-end items-center pl-[52px] md:pl-0 mt-1 md:mt-0">
+                                    <span class="text-xs text-gray-400 font-bold md:hidden uppercase tracking-wider">Monto:</span>
+                                    <div class="flex justify-end items-center gap-3">
+                                        <span id="txt-registrales" class="text-lg font-medium text-gray-700"></span>
+                                        <button id="btn-registrales" onclick="activarEdicion('registrales')" class="w-8 h-8 rounded-full bg-secondary/40 md:bg-transparent md:hover:bg-secondary/50 text-primary transition flex items-center justify-center shadow-sm md:shadow-none opacity-100 md:opacity-0 group-hover:opacity-100"><i class="fa-solid fa-pen text-xs"></i></button>
+                                        <input type="text" inputmode="decimal" id="desc-registrales" class="hidden w-28 text-right p-2 border-2 border-primary rounded-xl bg-white font-bold text-gray-700" oninput="formatRealTime(this); calcularTotalDescuentos()">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 7. MUTUO HIPOTECARIO (SOLO HIPOTECARIA) -->
+                            <div class="flex flex-col md:flex-row items-start md:items-center p-4 md:p-5 gap-3 md:gap-0 hover:bg-grayLight/50 transition group row-hipotecaria">
+                                <div class="w-full md:w-2/5 flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-secondary/40 flex items-center justify-center text-primary flex-shrink-0"><i class="fa-solid fa-file-contract"></i></div>
+                                    <span class="font-bold text-gray-700">Mutuo Hipotecario</span>
+                                </div>
+                                <div class="w-full md:w-2/5 flex flex-col md:items-center justify-start md:justify-center pl-[52px] md:pl-0 gap-2">
+                                    <button onclick="abrirModal('mutuo_hipotecario')" class="text-primary hover:text-primaryHover bg-secondary/30 hover:bg-secondary/60 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 w-fit">
+                                        <i class="fa-solid fa-table-list"></i> Tabla Referencia
+                                    </button>
+                                </div>
+                                <div class="w-full md:w-1/5 flex justify-between md:justify-end items-center pl-[52px] md:pl-0 mt-1 md:mt-0">
+                                    <span class="text-xs text-gray-400 font-bold md:hidden uppercase tracking-wider">Monto:</span>
+                                    <div class="flex justify-end items-center gap-3">
+                                        <span id="txt-mutuo" class="text-lg font-medium text-gray-700"></span>
+                                        <button id="btn-mutuo" onclick="activarEdicion('mutuo')" class="w-8 h-8 rounded-full bg-secondary/40 md:bg-transparent md:hover:bg-secondary/50 text-primary transition flex items-center justify-center shadow-sm md:shadow-none opacity-100 md:opacity-0 group-hover:opacity-100"><i class="fa-solid fa-pen text-xs"></i></button>
+                                        <input type="text" inputmode="decimal" id="desc-mutuo" class="hidden w-28 text-right p-2 border-2 border-primary rounded-xl bg-white font-bold text-gray-700" oninput="formatRealTime(this); calcularTotalDescuentos()">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 8. ANOTACION / CERTIFICACION (SOLO HIPOTECARIA) -->
+                            <div class="flex flex-col md:flex-row items-start md:items-center p-4 md:p-5 gap-3 md:gap-0 hover:bg-grayLight/50 transition group row-hipotecaria">
+                                <div class="w-full md:w-2/5 flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-secondary/40 flex items-center justify-center text-primary flex-shrink-0"><i class="fa-solid fa-thumbtack"></i></div>
+                                    <span class="font-bold text-gray-700 flex flex-col">
+                                        <span>Anotación Preventiva</span>
+                                        <span class="text-xs text-gray-500 font-normal">Y Certificación Extractada</span>
+                                    </span>
+                                </div>
+                                <div class="w-full md:w-2/5 flex items-center justify-start md:justify-center pl-[52px] md:pl-0">
+                                    <span class="text-xs text-gray-400 font-bold uppercase">Costo Fijo Base</span>
+                                </div>
+                                <div class="w-full md:w-1/5 flex justify-between md:justify-end items-center pl-[52px] md:pl-0 mt-1 md:mt-0">
+                                    <span class="text-xs text-gray-400 font-bold md:hidden uppercase tracking-wider">Monto:</span>
+                                    <div class="flex justify-end items-center gap-3">
+                                        <span id="txt-fijos-hipo" class="text-lg font-medium text-gray-700"></span>
+                                        <button id="btn-fijos-hipo" onclick="activarEdicion('fijos-hipo')" class="w-8 h-8 rounded-full bg-secondary/40 md:bg-transparent md:hover:bg-secondary/50 text-primary transition flex items-center justify-center shadow-sm md:shadow-none opacity-100 md:opacity-0 group-hover:opacity-100"><i class="fa-solid fa-pen text-xs"></i></button>
+                                        <input type="text" inputmode="decimal" id="desc-fijos-hipo" class="hidden w-28 text-right p-2 border-2 border-primary rounded-xl bg-white font-bold text-gray-700" oninput="formatRealTime(this); calcularTotalDescuentos()">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 9. VALÚO (SOLO HIPOTECARIA) -->
+                            <div class="flex flex-col md:flex-row items-start md:items-center p-4 md:p-5 gap-3 md:gap-0 hover:bg-grayLight/50 transition group row-hipotecaria">
+                                <div class="w-full md:w-2/5 flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-secondary/40 flex items-center justify-center text-primary flex-shrink-0"><i class="fa-solid fa-calculator"></i></div>
+                                    <span class="font-bold text-gray-700">Valúo (Cancela al Evaluador)</span>
+                                </div>
+                                <div class="w-full md:w-2/5 flex items-center justify-start md:justify-center pl-[52px] md:pl-0">
+                                    <label class="inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="chk-valuo" onchange="recalcularDescuentos()" class="w-4 h-4 rounded text-primary focus:ring-primary">
+                                        <span class="ml-2 text-xs text-gray-500 font-bold uppercase">Incluir Estimado</span>
+                                    </label>
+                                </div>
+                                <div class="w-full md:w-1/5 flex justify-between md:justify-end items-center pl-[52px] md:pl-0 mt-1 md:mt-0">
+                                    <span class="text-xs text-gray-400 font-bold md:hidden uppercase tracking-wider">Monto:</span>
+                                    <div class="flex justify-end items-center gap-3">
+                                        <span id="txt-valuo" class="text-lg font-medium text-gray-700"></span>
+                                        <button id="btn-valuo" onclick="activarEdicion('valuo')" class="w-8 h-8 rounded-full bg-secondary/40 md:bg-transparent md:hover:bg-secondary/50 text-primary transition flex items-center justify-center shadow-sm md:shadow-none opacity-100 md:opacity-0 group-hover:opacity-100"><i class="fa-solid fa-pen text-xs"></i></button>
+                                        <input type="text" inputmode="decimal" id="desc-valuo" class="hidden w-28 text-right p-2 border-2 border-primary rounded-xl bg-white font-bold text-gray-700" oninput="formatRealTime(this); calcularTotalDescuentos()">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 10. ACCIONES (AMBOS - SIN IVA) -->
+                            <div class="flex flex-col md:flex-row items-start md:items-center p-4 md:p-5 gap-3 md:gap-0 hover:bg-grayLight/50 transition group row-ambos">
+                                <div class="w-full md:w-2/5 flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-secondary/40 flex items-center justify-center text-primary flex-shrink-0"><i class="fa-solid fa-chart-pie"></i></div>
+                                    <span class="font-bold text-gray-700">Acciones</span>
+                                </div>
+                                <div class="w-full md:w-2/5 flex flex-col md:items-center justify-start md:justify-center pl-[52px] md:pl-0 gap-2">
+                                    <button onclick="abrirModal('acciones')" class="text-primary hover:text-primaryHover bg-secondary/30 hover:bg-secondary/60 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 w-fit">
+                                        <i class="fa-solid fa-table-list"></i> Ver Tabla
+                                    </button>
+                                </div>
+                                <div class="w-full md:w-1/5 flex justify-between md:justify-end items-center pl-[52px] md:pl-0 mt-1 md:mt-0">
+                                    <span class="text-xs text-gray-400 font-bold md:hidden uppercase tracking-wider">Monto:</span>
+                                    <div class="flex justify-end items-center gap-3">
+                                        <span id="txt-acciones" class="text-lg font-medium text-gray-700"></span>
+                                        <button id="btn-acciones" onclick="activarEdicion('acciones')" class="w-8 h-8 rounded-full bg-secondary/40 md:bg-transparent md:hover:bg-secondary/50 text-primary transition flex items-center justify-center shadow-sm md:shadow-none opacity-100 md:opacity-0 group-hover:opacity-100"><i class="fa-solid fa-pen text-xs"></i></button>
+                                        <input type="text" inputmode="decimal" id="desc-acciones" class="hidden w-28 text-right p-2 border-2 border-primary rounded-xl bg-white font-bold text-gray-700" oninput="formatRealTime(this); calcularTotalDescuentos()">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 11. 1RA CUOTA (AMBOS) -->
+                            <div class="flex flex-col md:flex-row items-start md:items-center p-4 md:p-5 gap-3 md:gap-0 hover:bg-grayLight/50 transition group row-ambos">
+                                <div class="w-full md:w-2/5 flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-secondary/40 flex items-center justify-center text-primary flex-shrink-0"><i class="fa-solid fa-calendar-check"></i></div>
+                                    <span class="font-bold text-gray-700">Descuento Primera Cuota</span>
+                                </div>
+                                <div class="w-full md:w-2/5 flex items-center justify-start md:justify-center pl-[52px] md:pl-0">
+                                    <label class="inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="chk-primera-cuota" onchange="recalcularDescuentos()" class="w-4 h-4 rounded text-primary focus:ring-primary">
+                                        <span class="ml-2 text-xs text-gray-500 font-bold uppercase">Aplicar (Restr. Aplican)</span>
+                                    </label>
+                                </div>
+                                <div class="w-full md:w-1/5 flex justify-between md:justify-end items-center pl-[52px] md:pl-0 mt-1 md:mt-0">
+                                    <span class="text-xs text-gray-400 font-bold md:hidden uppercase tracking-wider">Monto:</span>
+                                    <div class="flex justify-end items-center gap-3">
+                                        <span id="txt-primera-cuota" class="text-lg font-medium text-gray-700"></span>
+                                        <button id="btn-primera-cuota" onclick="activarEdicion('primera-cuota')" class="w-8 h-8 rounded-full bg-secondary/40 md:bg-transparent md:hover:bg-secondary/50 text-primary transition flex items-center justify-center shadow-sm md:shadow-none opacity-100 md:opacity-0 group-hover:opacity-100"><i class="fa-solid fa-pen text-xs"></i></button>
+                                        <input type="text" inputmode="decimal" id="desc-primera-cuota" class="hidden w-28 text-right p-2 border-2 border-primary rounded-xl bg-white font-bold text-gray-700" oninput="formatRealTime(this); calcularTotalDescuentos()">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 12. ADICIONALES (AMBOS) -->
+                            <div class="flex flex-col md:flex-row items-start md:items-center p-4 md:p-5 gap-3 md:gap-0 hover:bg-grayLight/50 transition group row-ambos border-b-0">
+                                <div class="w-full md:w-2/5 flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-secondary/40 flex items-center justify-center text-primary flex-shrink-0"><i class="fa-solid fa-plus-minus"></i></div>
+                                    <span class="font-bold text-gray-700">Deducciones Adicionales</span>
+                                </div>
+                                <div class="w-full md:w-2/5 flex items-center justify-start md:justify-center pl-[52px] md:pl-0">
+                                    <span class="text-xs text-gray-400 font-bold uppercase">Personalizado</span>
+                                </div>
+                                <div class="w-full md:w-1/5 flex justify-between md:justify-end items-center pl-[52px] md:pl-0 mt-1 md:mt-0">
+                                    <span class="text-xs text-gray-400 font-bold md:hidden uppercase tracking-wider">Monto:</span>
+                                    <div class="flex justify-end items-center gap-3">
+                                        <span id="txt-adicionales" class="text-lg font-medium text-gray-700"></span>
+                                        <button id="btn-adicionales" onclick="activarEdicion('adicionales')" class="w-8 h-8 rounded-full bg-secondary/40 md:bg-transparent md:hover:bg-secondary/50 text-primary transition flex items-center justify-center shadow-sm md:shadow-none opacity-100 md:opacity-0 group-hover:opacity-100"><i class="fa-solid fa-pen text-xs"></i></button>
+                                        <input type="text" inputmode="decimal" id="desc-adicionales" class="hidden w-28 text-right p-2 border-2 border-primary rounded-xl bg-white font-bold text-gray-700" oninput="formatRealTime(this); calcularTotalDescuentos()">
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- TOTAL -->
+                        <div class="bg-primary flex flex-col">
+                            <div class="p-6 md:p-8 flex flex-col md:flex-row justify-between items-center text-white gap-2 md:gap-0 border-b border-white/20">
+                                <span class="text-sm md:text-lg uppercase tracking-widest font-black opacity-90">Total Deducciones:</span>
+                                <span id="desc-total-sum" class="text-4xl md:text-5xl font-black drop-shadow-md">$0.00</span>
+                            </div>
+                            <div class="p-6 md:p-8 flex flex-col md:flex-row justify-between items-center text-white gap-2 md:gap-0 bg-black/10">
+                                <span class="text-sm md:text-lg uppercase tracking-widest font-black opacity-90 text-secondary">Total a Desembolsar:</span>
+                                <span id="desc-desembolso" class="text-3xl md:text-4xl font-black text-secondary drop-shadow-md">$0.00</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="calendar-grid" id="calendar"></div>
             </section>
-        </main>
 
-        <nav class="bottom-nav">
-            <button id="nav-pdfs" class="active">Archivos</button>
-            <button id="nav-calendar">Calendario</button>
-        </nav>
-    </div>
+            <!-- SECCIÓN 3: DOCS HIPOTECARIOS -->
+            <section id="tab-doc-hipo" class="tab-content hidden max-w-4xl mx-auto">
+                <div class="bg-white p-5 md:p-12 rounded-[2rem] md:rounded-[2.5rem] shadow-xl shadow-black/5 border border-secondary/20">
+                    <h2 class="text-3xl font-extrabold text-primary mb-10 tracking-tight">Doc. Hipotecarios</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="p-6 border-2 border-secondary/40 rounded-3xl hover:border-primary/50 hover:shadow-lg transition bg-grayLight group">
+                            <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm mb-4 group-hover:bg-primary group-hover:text-white transition text-primary"><i class="fa-solid fa-file-contract text-xl"></i></div>
+                            <h4 class="font-bold text-dark text-lg mb-2">Copia de Escritura</h4>
+                            <p class="text-sm text-gray-500 font-medium">Copia legible del inmueble a hipotecar.</p>
+                        </div>
+                        <div class="p-6 border-2 border-secondary/40 rounded-3xl hover:border-primary/50 hover:shadow-lg transition bg-grayLight group">
+                            <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm mb-4 group-hover:bg-primary group-hover:text-white transition text-primary"><i class="fa-solid fa-calculator text-xl"></i></div>
+                            <h4 class="font-bold text-dark text-lg mb-2">Valúo</h4>
+                            <p class="text-sm text-gray-500 font-medium">El cliente cancela directamente al valuador.</p>
+                        </div>
+                        <div class="p-6 border-2 border-secondary/40 rounded-3xl hover:border-primary/50 hover:shadow-lg transition bg-grayLight group">
+                            <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm mb-4 group-hover:bg-primary group-hover:text-white transition text-primary"><i class="fa-solid fa-certificate text-xl"></i></div>
+                            <h4 class="font-bold text-dark text-lg mb-2">Certificación Extractada</h4>
+                            <p class="text-sm text-gray-500 font-medium">El cliente cancela su emisión.</p>
+                        </div>
+                        <div class="p-6 border-2 border-secondary/40 rounded-3xl hover:border-primary/50 hover:shadow-lg transition bg-grayLight group">
+                            <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm mb-4 group-hover:bg-primary group-hover:text-white transition text-primary"><i class="fa-solid fa-building-columns text-xl"></i></div>
+                            <h4 class="font-bold text-dark text-lg mb-2">Solvencia Municipal</h4>
+                            <p class="text-sm text-gray-500 font-medium">Solicitar en la alcaldía correspondiente.</p>
+                        </div>
+                        <div class="p-6 border-2 border-secondary/40 rounded-3xl hover:border-primary/50 hover:shadow-lg transition bg-grayLight group">
+                            <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm mb-4 group-hover:bg-primary group-hover:text-white transition text-primary"><i class="fa-solid fa-scale-balanced text-xl"></i></div>
+                            <h4 class="font-bold text-dark text-lg mb-2">Estudio Jurídico</h4>
+                            <p class="text-sm text-gray-500 font-medium">Solicitar a la abogada asignada.</p>
+                        </div>
+                        <div class="p-6 border-2 border-secondary/40 rounded-3xl hover:border-primary/50 hover:shadow-lg transition bg-grayLight group">
+                            <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm mb-4 group-hover:bg-primary group-hover:text-white transition text-primary"><i class="fa-solid fa-stamp text-xl"></i></div>
+                            <h4 class="font-bold text-dark text-lg mb-2">Anotación Preventiva</h4>
+                            <p class="text-sm text-gray-500 font-medium">Aplica únicamente si el crédito se aprueba.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-    <!-- PANTALLA DE LECTURA DE PDF (Mejorada y Limpia) -->
-    <div id="reader-screen" class="hidden-section">
-        <!-- Barra superior auto-ocultable -->
-        <div class="reader-header" id="reader-header">
-            <button id="close-reader" class="btn-icon">←</button>
-            <div id="pdf-title" class="full-title">Cargando...</div>
-            <div style="width: 28px;"></div> <!-- Espaciador para centrar el título -->
+            <!-- SECCIÓN 4: DOCS PERSONALES Y FIADORES -->
+            <section id="tab-doc-personas" class="tab-content hidden max-w-5xl mx-auto">
+                <div class="bg-white p-5 md:p-12 rounded-[2rem] md:rounded-[2.5rem] shadow-xl shadow-black/5 border border-secondary/20">
+                    <h2 class="text-3xl font-extrabold text-primary mb-10 tracking-tight">Documentos Personales y Fiadores</h2>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                        <div class="bg-grayLight p-8 rounded-[2rem] border-2 border-secondary/40">
+                            <div class="mb-6 flex items-center gap-4">
+                                <div class="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white"><i class="fa-solid fa-user text-xl"></i></div>
+                                <h3 class="text-2xl font-bold text-dark">Solicitante</h3>
+                            </div>
+                            <ul class="space-y-4 text-gray-700 font-medium list-disc pl-5 marker:text-primary">
+                                <li>DUI reverso y derecho.</li>
+                                <li>Recibo de agua o luz.</li>
+                                <li>Correo electrónico activo.</li>
+                                <li>Constancia de ingresos.</li>
+                                <li><span class="font-bold text-primary">¿Destino del Financiamiento?</span></li>
+                                <li><strong>2 referencias personales y 2 familiares</strong> que no vivan con usted (Nombre completo, Dirección, Teléfono).</li>
+                                <li>Firmar hoja de autorización de consulta de Buró.</li>
+                            </ul>
+                        </div>
+
+                        <div class="bg-grayLight p-8 rounded-[2rem] border-2 border-secondary/40">
+                            <div class="mb-6 flex items-center gap-4">
+                                <div class="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white"><i class="fa-solid fa-user-shield text-xl"></i></div>
+                                <h3 class="text-2xl font-bold text-dark">Fiadores</h3>
+                            </div>
+                            <ul class="space-y-4 text-gray-700 font-medium list-disc pl-5 marker:text-primary">
+                                <li>DUI reverso y derecho.</li>
+                                <li>Recibo de agua o luz.</li>
+                                <li><span class="font-bold text-primary">Constancia de ingresos (Mínimo $816).</span></li>
+                                <li><strong>2 referencias personales y 2 familiares</strong> que no vivan con usted (Nombre completo, Dirección, Teléfono).</li>
+                                <li>Firmar hoja de autorización de consulta de Buró.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECCIÓN 5: EXTRAS (FECHAS) -->
+            <section id="tab-extras" class="tab-content hidden max-w-5xl mx-auto">
+                <div class="bg-white p-5 md:p-12 rounded-[2rem] md:rounded-[2.5rem] shadow-xl shadow-black/5 border border-secondary/20">
+                    <h2 class="text-3xl font-extrabold text-primary mb-10 tracking-tight">Extras (Herramientas de Fechas)</h2>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        
+                        <!-- 1. CALCULAR FECHA FUTURA -->
+                        <div class="bg-grayLight p-6 rounded-[2rem] border-2 border-secondary/40 transition hover:shadow-lg hover:border-primary/50">
+                            <h3 class="text-xl font-bold text-dark mb-4 flex items-center gap-3"><i class="fa-solid fa-calendar-plus text-primary"></i> Calcular Fecha Futura</h3>
+                            <div class="grid grid-cols-4 gap-3 mb-5">
+                                <div>
+                                    <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Días</label>
+                                    <input type="number" id="ext-days" value="" placeholder="0" min="0" oninput="calcFutureDate()" class="w-full p-2.5 rounded-xl text-center border-2 border-transparent focus:border-primary focus:outline-none bg-white font-bold text-dark">
+                                </div>
+                                <div>
+                                    <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Semanas</label>
+                                    <input type="number" id="ext-weeks" value="" placeholder="0" min="0" oninput="calcFutureDate()" class="w-full p-2.5 rounded-xl text-center border-2 border-transparent focus:border-primary focus:outline-none bg-white font-bold text-dark">
+                                </div>
+                                <div>
+                                    <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Meses</label>
+                                    <input type="number" id="ext-months" value="" placeholder="0" min="0" oninput="calcFutureDate()" class="w-full p-2.5 rounded-xl text-center border-2 border-transparent focus:border-primary focus:outline-none bg-white font-bold text-dark">
+                                </div>
+                                <div>
+                                    <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Años</label>
+                                    <input type="number" id="ext-years" value="" placeholder="0" min="0" oninput="calcFutureDate()" class="w-full p-2.5 rounded-xl text-center border-2 border-transparent focus:border-primary focus:outline-none bg-white font-bold text-dark">
+                                </div>
+                            </div>
+                            <div class="bg-white p-4 rounded-xl border border-secondary/50 text-center">
+                                <span class="block text-xs uppercase text-gray-400 font-bold mb-1">Resultado (Calculado desde HOY)</span>
+                                <span id="res-future-date" class="text-lg font-bold text-primary capitalize drop-shadow-sm"></span>
+                            </div>
+                        </div>
+
+                        <!-- 2. TIEMPO TRANSCURRIDO -->
+                        <div class="bg-grayLight p-6 rounded-[2rem] border-2 border-secondary/40 transition hover:shadow-lg hover:border-primary/50">
+                            <h3 class="text-xl font-bold text-dark mb-4 flex items-center gap-3"><i class="fa-solid fa-clock-rotate-left text-primary"></i> Días Han Pasado</h3>
+                            <div class="mb-5">
+                                <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Desde cuándo (Fecha Pasada)</label>
+                                <input type="date" id="ext-past-date" value="" onchange="calcElapsedTime()" class="w-full p-3 rounded-xl border-2 border-transparent focus:border-primary focus:outline-none bg-white font-bold text-dark uppercase cursor-pointer">
+                            </div>
+                            <div class="bg-white p-4 rounded-xl border border-secondary/50 text-center flex flex-col justify-center min-h-[76px]">
+                                <span class="block text-xs uppercase text-gray-400 font-bold mb-1">Han pasado exactamente:</span>
+                                <span id="res-elapsed" class="text-lg font-bold text-primary"></span>
+                            </div>
+                        </div>
+
+                        <!-- 3. DÍAS FALTANTES -->
+                        <div class="bg-grayLight p-6 rounded-[2rem] border-2 border-secondary/40 transition hover:shadow-lg hover:border-primary/50">
+                            <h3 class="text-xl font-bold text-dark mb-4 flex items-center gap-3"><i class="fa-solid fa-hourglass-half text-primary"></i> Días Faltantes</h3>
+                            <div class="mb-5">
+                                <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Hasta cuándo (Fecha Futura)</label>
+                                <input type="date" id="ext-future-date" value="" onchange="calcDaysRemaining()" class="w-full p-3 rounded-xl border-2 border-transparent focus:border-primary focus:outline-none bg-white font-bold text-dark uppercase cursor-pointer">
+                            </div>
+                            <div class="bg-white p-4 rounded-xl border border-secondary/50 flex justify-between items-center">
+                                <span class="text-sm uppercase text-gray-400 font-bold">Faltan:</span>
+                                <div class="text-right flex items-baseline">
+                                    <span id="res-remaining" class="text-3xl font-black text-primary drop-shadow-sm"></span>
+                                    <span class="text-gray-500 font-bold ml-1">días</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 4. EDAD -->
+                        <div class="bg-grayLight p-6 rounded-[2rem] border-2 border-secondary/40 transition hover:shadow-lg hover:border-primary/50">
+                            <h3 class="text-xl font-bold text-dark mb-4 flex items-center gap-3"><i class="fa-solid fa-cake-candles text-primary"></i> Calcular Edad</h3>
+                            <div class="mb-5">
+                                <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Fecha de Nacimiento</label>
+                                <input type="date" id="ext-birth-date" value="" onchange="calcAge()" class="w-full p-3 rounded-xl border-2 border-transparent focus:border-primary focus:outline-none bg-white font-bold text-dark uppercase cursor-pointer">
+                            </div>
+                            <div class="bg-white p-4 rounded-xl border border-secondary/50 flex justify-between items-center">
+                                <span class="text-sm uppercase text-gray-400 font-bold">Edad Actual:</span>
+                                <div class="text-right flex items-baseline">
+                                    <span id="res-age" class="text-3xl font-black text-primary drop-shadow-sm"></span>
+                                    <span class="text-gray-500 font-bold ml-1">años</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
         </div>
-        
-        <!-- Visor PDF (Toque para modo concentración, Deslizar para cambiar página) -->
-        <div class="reader-body" id="viewer-container">
-            <div id="page-wrapper" class="page-wrapper">
-                <canvas id="pdf-render"></canvas>
+    </main>
+
+    <!-- MODAL PARA TABLAS INTERACTIVAS -->
+    <div id="modal-tablas" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-dark/70 backdrop-blur-sm" onclick="cerrarModal()"></div>
+        <div class="bg-white rounded-[2rem] shadow-2xl relative z-10 w-full max-w-4xl flex flex-col max-h-[90vh] border-4 border-grayLight">
+            <div class="p-6 border-b border-secondary/50 flex justify-between items-center bg-grayLight rounded-t-[1.8rem]">
+                <h3 id="modal-titulo" class="text-2xl font-extrabold text-primary flex items-center gap-3">
+                    <i class="fa-solid fa-table-list"></i> Tabla de Referencia
+                </h3>
+                <button onclick="cerrarModal()" class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 hover:shadow-md transition text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-0 overflow-y-auto bg-white rounded-b-[1.8rem]">
+                <p class="px-6 py-4 text-sm text-gray-500 font-medium bg-secondary/10 border-b border-secondary/30">
+                    <i class="fa-solid fa-circle-info text-primary mr-1"></i> Puedes hacer clic sobre cualquier fila para elegirla manualmente y cerrar el cuadro.
+                </p>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left min-w-[500px]" id="modal-tabla-contenido">
+                        <!-- Contenido dinámico -->
+                    </table>
+                </div>
             </div>
         </div>
-        
-        <!-- Indicador de página flotante -->
-        <div class="page-badge" id="page-badge">
-            <span id="page-num">1</span> / <span id="page-count">--</span>
-        </div>
     </div>
 
-    <!-- MODAL ELEGANTE PARA EL CALENDARIO (Intacto) -->
-    <div id="note-modal" class="custom-modal hidden-section">
-        <div class="custom-modal-content">
-            <h3 id="note-modal-title">Día</h3>
-            <div id="note-display" class="note-text-large"></div>
-            <textarea id="note-input" rows="4" placeholder="¿Qué PDF estudiarás este día?"></textarea>
+    <!-- SCRIPT -->
+    <script>
+        // --- 1. UTILIDADES Y FORMATO EN TIEMPO REAL ---
+        function formatNumber(num) {
+            return parseFloat(num).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+        function parseNumber(str) {
+            if(!str) return 0;
+            return parseFloat(str.toString().replace(/,/g, '')) || 0;
+        }
+
+        function formatRealTime(inputElement) {
+            let cursor = inputElement.selectionStart;
+            let oldLength = inputElement.value.length;
             
-            <div class="custom-modal-actions">
-                <button id="btn-close-note" class="btn-text text-red">Cerrar</button>
-                <button id="btn-edit-note" class="btn-text text-blue">Editar</button>
-                <button id="btn-save-note" class="btn-text text-blue" style="font-weight:bold;">Guardar</button>
-            </div>
-        </div>
-    </div>
+            let value = inputElement.value.replace(/[^0-9.]/g, '');
+            const parts = value.split('.');
+            if (parts.length > 2) {
+                parts.pop();
+                value = parts.join('.');
+            }
+            if (parts[1] && parts[1].length > 2) {
+                parts[1] = parts[1].substring(0, 2);
+                value = parts.join('.');
+            }
+            
+            if (parts[0]) {
+                parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            }
+            
+            let formatted = parts.join('.');
+            inputElement.value = formatted;
+            
+            let newLength = formatted.length;
+            cursor += (newLength - oldLength);
+            if (cursor < 0) cursor = 0;
+            inputElement.setSelectionRange(cursor, cursor);
+        }
 
-    <script src="app.js"></script>
+        // --- 2. NAVEGACIÓN Y VISTAS ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active-tab', 'text-primary', 'bg-secondary/30');
+            });
+
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+            const activeBtn = document.getElementById('btn-' + tabId);
+            activeBtn.classList.add('active-tab', 'text-primary');
+
+            document.getElementById('mobile-title').innerText = activeBtn.querySelector('span').innerText;
+
+            if (tabId === 'descuentos') recalcularDescuentos();
+            
+            // Cierra el panel lateral al seleccionar una opción en cualquier tamaño de pantalla
+            const sidebar = document.getElementById('sidebar');
+            if (!sidebar.classList.contains('-translate-x-full')) {
+                toggleSidebar();
+            }
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            }
+        }
+
+        // --- 3. LOGICA OPCIONES HIPOTECARIAS ---
+        function toggleOpcionesHipotecarias() {
+            const panel = document.getElementById('opciones-hipotecarias');
+            const icon = document.getElementById('icon-toggle-hipo');
+            if(panel.classList.contains('hidden')) {
+                panel.classList.remove('hidden');
+                icon.classList.add('rotate-180');
+            } else {
+                panel.classList.add('hidden');
+                icon.classList.remove('rotate-180');
+                
+                // Limpiar datos al ocultar para que no afecten cálculos
+                document.getElementById('chk-seguro-residencia').checked = false;
+                document.getElementById('valor-construccion').value = '';
+                document.getElementById('monto-cancelacion-base').value = '';
+                
+                calcularCuota();
+                recalcularDescuentos();
+            }
+        }
+
+        function cambiarTipoDeduccion(tipo) {
+            tipoDeduccionActual = tipo;
+            
+            document.getElementById('btn-tipo-hipotecaria').className = `flex-1 py-3 text-sm font-bold rounded-xl transition-all ${tipo === 'hipotecaria' ? 'toggle-btn-active' : 'text-gray-400 hover:text-primary'}`;
+            document.getElementById('btn-tipo-personal').className = `flex-1 py-3 text-sm font-bold rounded-xl transition-all ${tipo === 'personal' ? 'toggle-btn-active' : 'text-gray-400 hover:text-primary'}`;
+            
+            document.querySelectorAll('.row-ambos').forEach(el => el.classList.remove('hidden'));
+            document.querySelectorAll('.row-hipotecaria').forEach(el => {
+                tipo === 'hipotecaria' ? el.classList.remove('hidden') : el.classList.add('hidden');
+            });
+            document.querySelectorAll('.row-personal').forEach(el => {
+                tipo === 'personal' ? el.classList.remove('hidden') : el.classList.add('hidden');
+            });
+
+            recalcularDescuentos();
+        }
+
+        let tipoDeduccionActual = 'hipotecaria';
+
+        // --- 4. CÁLCULO DE CUOTA ---
+        function obtenerMesesDesdePlazo(plazoVal) {
+            const valStr = plazoVal.toString().trim();
+            if (!valStr.includes('.')) return (parseFloat(valStr) || 0) * 12;
+            const partes = valStr.split('.');
+            const anios = parseInt(partes[0], 10) || 0;
+            const meses = parseInt(partes[1], 10) || 0;
+            return (anios * 12) + meses;
+        }
+
+        function calcularCuota() {
+            const monto = parseNumber(document.getElementById('monto').value);
+            const plazoInput = parseFloat(document.getElementById('plazo').value) || 0;
+            const interesAnual = parseNumber(document.getElementById('interes').value);
+
+            const meses = obtenerMesesDesdePlazo(plazoInput);
+            document.getElementById('meses-info').innerText = `${meses} meses en total`;
+
+            let cuotaBase = 0;
+            let seguro = 0;
+            let seguroResidencia = 0;
+            let totalCuota = 0;
+
+            // Logica Seguro de Residencia
+            const applySeguroRes = document.getElementById('chk-seguro-residencia')?.checked || false;
+            const boxSeguroRes = document.getElementById('box-seguro-residencia');
+            const rowSeguroResResult = document.getElementById('row-res-seguro-residencia');
+
+            if(applySeguroRes) {
+                if(boxSeguroRes) boxSeguroRes.classList.remove('hidden');
+                if(rowSeguroResResult) rowSeguroResResult.classList.remove('hidden');
+                
+                const valorConst = parseNumber(document.getElementById('valor-construccion').value);
+                
+                // Formula: =(MONTO*4.25) / 1000 / 12
+                seguroResidencia = (valorConst * 4.25) / 1000 / 12;
+            } else {
+                if(boxSeguroRes) boxSeguroRes.classList.add('hidden');
+                if(rowSeguroResResult) rowSeguroResResult.classList.add('hidden');
+            }
+
+            if (monto > 0 && meses > 0 && interesAnual > 0) {
+                const i = (interesAnual / 100) / 12; 
+                cuotaBase = monto * (i * Math.pow(1 + i, meses)) / (Math.pow(1 + i, meses) - 1);
+                seguro = monto * 0.001; 
+            }
+            
+            totalCuota = cuotaBase + seguro + seguroResidencia;
+
+            document.getElementById('res-cuota-base').innerText = `$${formatNumber(cuotaBase)}`;
+            document.getElementById('res-seguro').innerText = `$${formatNumber(seguro)}`;
+            
+            if(document.getElementById('res-seguro-residencia')) {
+                document.getElementById('res-seguro-residencia').innerText = `$${formatNumber(seguroResidencia)}`;
+            }
+            
+            document.getElementById('res-total-cuota').innerText = `$${formatNumber(totalCuota)}`;
+            return { monto, totalCuota };
+        }
+
+        // --- 5. LÓGICA DE TABLAS REFERENCIALES (MODALES) ---
+        const tablasReferencia = {
+            'mutuo_personal': {
+                titulo: "Mutuos Personales", targetId: 'mutuo_personal', heads: ["Rango de Montos ($)", "Costo Base ($)", "IVA ($)", "Total ($)"],
+                datos: [ 
+                    ["0.00 - 999.00", 25.00, 3.25, 28.25], 
+                    ["1,000.00 - 2,000.00", 30.00, 3.90, 33.90], 
+                    ["2,001.00 - 3,000.00", 35.00, 4.55, 39.55], 
+                    ["3,001.00 - 4,000.00", 40.00, 5.20, 45.20], 
+                    ["4,001.00 - 5,000.00", 45.00, 5.85, 50.85], 
+                    ["5,001.00 - 6,000.00", 50.00, 6.50, 56.50], 
+                    ["6,001.00 - 7,000.00", 55.00, 7.15, 62.15], 
+                    ["7,001.00 - 8,000.00", 60.00, 7.80, 67.80], 
+                    ["8,001.00 - 9,000.00", 65.00, 8.45, 73.45], 
+                    ["9,001.00 - 10,000.00", 70.00, 9.10, 79.10], 
+                    ["10,001.00 - 11,000.00", 75.00, 9.75, 84.75], 
+                    ["11,001.00 - 12,000.00", 80.00, 10.40, 90.40], 
+                    ["12,001.00 - 13,000.00", 85.00, 11.05, 96.05], 
+                    ["13,001.00 - 14,000.00", 90.00, 11.70, 101.70], 
+                    ["14,001.00 - 15,000.00", 95.00, 12.35, 107.35], 
+                    ["15,001.00 - 16,000.00", 100.00, 13.00, 113.00], 
+                    ["16,001.00 - 17,000.00", 105.00, 13.65, 118.65], 
+                    ["17,001.00 - 18,000.00", 110.00, 14.30, 124.30], 
+                    ["18,001.00 - 19,000.00", 115.00, 14.95, 129.95], 
+                    ["19,001.00 - 20,000.00", 120.00, 15.60, 135.60], 
+                    ["20,001.00 en adelante", 125.00, 16.25, 141.25] 
+                ]
+            },
+            'mutuo_hipotecario': {
+                titulo: "Mutuo Hipotecario", targetId: 'mutuo', heads: ["Rango de Montos ($)", "Costo Base ($)", "IVA ($)", "Total ($)"],
+                datos: [ ["1,000.00 - 10,000.00", 75.00, 9.75, 84.75], ["10,001.00 - 20,000.00", 100.00, 13.00, 113.00], ["20,001.00 - 30,000.00", 125.00, 16.25, 141.25], ["30,001.00 - 40,000.00", 150.00, 19.50, 169.50], ["40,001.00 - 50,000.00", 175.00, 22.75, 197.75], ["50,000.00 en adelante", 200.00, 26.00, 226.00] ]
+            },
+            'cancelacion_hipoteca': {
+                titulo: "Cancelación de Hipotecas", targetId: 'cancelacion', heads: ["Rango de Montos ($)", "Costo Base ($)", "IVA ($)", "Total ($)"],
+                datos: [ ["1,000.00 - 10,000.00", 40.00, 5.20, 45.20], ["10,001.00 - 20,000.00", 50.00, 6.50, 56.50], ["20,001.00 - 30,000.00", 60.00, 7.80, 67.80], ["30,001.00 - 40,000.00", 70.00, 9.10, 79.10], ["40,001.00 - 50,000.00", 80.00, 10.40, 90.40], ["50,000.00 en adelante", 90.00, 11.70, 101.70] ]
+            },
+            'estudio': {
+                titulo: "Derecho por Estudio Crediticio", targetId: 'estudio', heads: ["Rango de Montos ($)", "Porcentaje", "IVA"],
+                datos: [ ["1,000.00 - 10,000.00", "1%", "13%"], ["10,001.00 - 50,000.00", "0.75%", "13%"], ["50,000.00 en adelante", "0.50%", "13%"] ]
+            },
+            'acciones': {
+                titulo: "Descuento por Acciones", targetId: 'acciones', heads: ["Rango de Montos ($)", "Porcentaje"],
+                datos: [ ["1,000.00 - 10,000.00", "1.50%"], ["10,001.00 - 50,000.00", "1%"], ["50,001.00 en adelante", "0.75%"] ]
+            }
+        };
+
+        function abrirModal(tipo) {
+            const data = tablasReferencia[tipo];
+            if(!data) return;
+            document.getElementById('modal-titulo').innerHTML = `<i class="fa-solid fa-table-list"></i> ${data.titulo}`;
+            let thead = data.heads.map(h => `<th class="p-4 font-bold uppercase tracking-wide text-xs text-gray-500 whitespace-nowrap">${h}</th>`).join('');
+            let tbody = data.datos.map(fila => {
+                const valorFinal = fila[fila.length - 1]; 
+                const valorNum = parseFloat(valorFinal);
+                let clickEvt = !isNaN(valorNum) ? `onclick="seleccionarValorManual('${data.targetId}', ${valorNum})"` : "";
+                let trCls = !isNaN(valorNum) ? "cursor-pointer hover:bg-secondary/40 transition group" : "hover:bg-grayLight";
+                let btnHtml = !isNaN(valorNum) ? `<div class="opacity-0 group-hover:opacity-100 absolute right-4 text-primary text-xs font-bold bg-white px-2 py-1 rounded shadow-sm">Seleccionar</div>` : "";
+                
+                let tds = fila.map((celda, i) => {
+                    let val = (typeof celda === 'number' && i > 0) ? `$${formatNumber(celda)}` : celda;
+                    let fontClass = (i === fila.length - 1 && !isNaN(valorNum)) ? "font-bold text-primary" : "font-medium text-gray-700";
+                    return `<td class="p-4 border-t border-secondary/30 relative whitespace-nowrap ${fontClass}">${val} ${i === fila.length -1 ? btnHtml : ''}</td>`;
+                }).join('');
+                return `<tr ${clickEvt} class="${trCls}">${tds}</tr>`;
+            }).join('');
+
+            document.getElementById('modal-tabla-contenido').innerHTML = `<thead class="bg-grayLight/80 sticky top-0 backdrop-blur-sm shadow-sm"><tr>${thead}</tr></thead><tbody class="divide-y divide-secondary/30">${tbody}</tbody>`;
+            document.getElementById('modal-tablas').classList.remove('hidden');
+        }
+
+        function cerrarModal() {
+            document.getElementById('modal-tablas').classList.add('hidden');
+        }
+
+        function seleccionarValorManual(field, valorNum) {
+            activarEdicion(field);
+            const inputEl = document.getElementById(`desc-${field}`);
+            inputEl.value = formatNumber(valorNum);
+            cerrarModal();
+            calcularTotalDescuentos();
+        }
+
+        // --- 6. GESTIÓN DE DEDUCCIONES ---
+        let manualFlags = {
+            'estudio': false, 'buro': false, 'mutuo_personal': false, 'cancelacion': false, 'derechocanc': false, 'registrales': false, 'mutuo': false, 
+            'fijos-hipo': false, 'valuo': false, 'acciones': false, 'primera-cuota': false, 'adicionales': false
+        };
+
+        function activarEdicion(field) {
+            manualFlags[field] = true;
+            document.getElementById(`txt-${field}`).classList.add('hidden');
+            document.getElementById(`btn-${field}`).classList.add('hidden');
+            const inputEl = document.getElementById(`desc-${field}`);
+            inputEl.classList.remove('hidden');
+            inputEl.focus();
+        }
+
+        function reiniciarDescuentos() {
+            for (let key in manualFlags) { 
+                manualFlags[key] = false; 
+                document.getElementById(`txt-${key}`).classList.remove('hidden');
+                document.getElementById(`btn-${key}`).classList.remove('hidden');
+                document.getElementById(`desc-${key}`).classList.add('hidden');
+            }
+            document.getElementById('desc-adicionales').value = "";
+            document.getElementById('desc-valuo').value = "";
+            document.getElementById('chk-valuo').checked = false;
+            document.getElementById('chk-cancelacion').checked = false;
+            document.getElementById('chk-derecho-canc').checked = false;
+            document.getElementById('chk-primera-cuota').checked = false;
+            recalcularDescuentos();
+        }
+
+        function actualizarCampo(field, valorAuto) {
+            const input = document.getElementById(`desc-${field}`);
+            const span = document.getElementById(`txt-${field}`);
+            if (!manualFlags[field]) {
+                input.value = formatNumber(valorAuto);
+                span.innerText = `$${formatNumber(valorAuto)}`;
+            } else {
+                span.innerText = `$${formatNumber(parseNumber(input.value))}`;
+            }
+        }
+
+        function recalcularDescuentos() {
+            const monto = parseNumber(document.getElementById('monto').value);
+            document.getElementById('desc-monto-ref').innerText = `$${formatNumber(monto)}`;
+            
+            // Obtener monto base específico para cancelación (si fue ingresado en Calculador de Cuota)
+            const montoCancRaw = document.getElementById('monto-cancelacion-base') ? parseNumber(document.getElementById('monto-cancelacion-base').value) : 0;
+            const montoParaCancelacion = montoCancRaw > 0 ? montoCancRaw : monto;
+            
+            if(monto === 0 && montoCancRaw === 0) {
+                let campos = ['estudio', 'buro', 'mutuo_personal', 'cancelacion', 'derechocanc', 'registrales', 'mutuo', 'fijos-hipo', 'valuo', 'acciones', 'primera-cuota', 'adicionales'];
+                campos.forEach(c => actualizarCampo(c, 0));
+                calcularTotalDescuentos();
+                return;
+            }
+
+            let pctEstudio = monto > 50000 ? 0.005 : (monto > 10000 ? 0.0075 : (monto > 0 ? 0.01 : 0));
+            actualizarCampo('estudio', (monto * pctEstudio) * 1.13);
+
+            const numPersonas = parseInt(document.getElementById('num-personas-buro').value) || 0;
+            actualizarCampo('buro', numPersonas * 1.98);
+
+            let mutuoPerTotal = 0;
+            if (monto <= 999) mutuoPerTotal = 28.25; 
+            else if (monto <= 2000) mutuoPerTotal = 33.90; 
+            else if (monto <= 3000) mutuoPerTotal = 39.55; 
+            else if (monto <= 4000) mutuoPerTotal = 45.20; 
+            else if (monto <= 5000) mutuoPerTotal = 50.85; 
+            else if (monto <= 6000) mutuoPerTotal = 56.50; 
+            else if (monto <= 7000) mutuoPerTotal = 62.15; 
+            else if (monto <= 8000) mutuoPerTotal = 67.80; 
+            else if (monto <= 9000) mutuoPerTotal = 73.45; 
+            else if (monto <= 10000) mutuoPerTotal = 79.10; 
+            else if (monto <= 11000) mutuoPerTotal = 84.75; 
+            else if (monto <= 12000) mutuoPerTotal = 90.40; 
+            else if (monto <= 13000) mutuoPerTotal = 96.05; 
+            else if (monto <= 14000) mutuoPerTotal = 101.70; 
+            else if (monto <= 15000) mutuoPerTotal = 107.35; 
+            else if (monto <= 16000) mutuoPerTotal = 113.00; 
+            else if (monto <= 17000) mutuoPerTotal = 118.65; 
+            else if (monto <= 18000) mutuoPerTotal = 124.30; 
+            else if (monto <= 19000) mutuoPerTotal = 129.95; 
+            else if (monto <= 20000) mutuoPerTotal = 135.60; 
+            else mutuoPerTotal = monto > 0 ? 141.25 : 0;
+            actualizarCampo('mutuo_personal', mutuoPerTotal);
+
+            // Cancelación (Usando montoParaCancelacion)
+            const chkCancelacion = document.getElementById('chk-cancelacion').checked;
+            let cancelacionTotal = 0;
+            if (chkCancelacion && montoParaCancelacion > 0) {
+                if (montoParaCancelacion <= 10000) cancelacionTotal = 45.20; 
+                else if (montoParaCancelacion <= 20000) cancelacionTotal = 56.50; 
+                else if (montoParaCancelacion <= 30000) cancelacionTotal = 67.80; 
+                else if (montoParaCancelacion <= 40000) cancelacionTotal = 79.10; 
+                else if (montoParaCancelacion <= 50000) cancelacionTotal = 90.40; 
+                else cancelacionTotal = 101.70;
+            }
+            actualizarCampo('cancelacion', cancelacionTotal);
+
+            // Derecho Cancelación (Usando montoParaCancelacion)
+            const chkDerechoCanc = document.getElementById('chk-derecho-canc').checked;
+            let derechoCancTotal = 0;
+            if (chkDerechoCanc && montoParaCancelacion > 0) {
+                if (montoParaCancelacion <= 9000) {
+                    derechoCancTotal = 8.91;
+                } else {
+                    derechoCancTotal = 8.91 + (Math.ceil((montoParaCancelacion - 9000) / 100) * 0.13);
+                }
+            }
+            actualizarCampo('derechocanc', derechoCancTotal);
+
+            actualizarCampo('registrales', (monto / 1000) * 3.80);
+
+            let mutuoHipoTotal = 0;
+            if (monto <= 10000) mutuoHipoTotal = 84.75; 
+            else if (monto <= 20000) mutuoHipoTotal = 113.00; 
+            else if (monto <= 30000) mutuoHipoTotal = 141.25; 
+            else if (monto <= 40000) mutuoHipoTotal = 169.50; 
+            else if (monto <= 50000) mutuoHipoTotal = 197.75; 
+            else mutuoHipoTotal = monto > 0 ? 226.00 : 0;
+            actualizarCampo('mutuo', mutuoHipoTotal);
+
+            actualizarCampo('fijos-hipo', monto > 0 ? 17.72 : 0);
+
+            const chkValuo = document.getElementById('chk-valuo').checked;
+            if(!manualFlags['valuo']) actualizarCampo('valuo', (chkValuo && monto > 0) ? 150.00 : 0.00); 
+
+            // Acciones redondeadas al entero superior (APROXIMAR.MAS)
+            let pctAcciones = monto > 50000 ? 0.0075 : (monto > 10000 ? 0.01 : (monto > 0 ? 0.015 : 0));
+            actualizarCampo('acciones', Math.ceil(monto * pctAcciones));
+
+            const chkPrimera = document.getElementById('chk-primera-cuota').checked;
+            if(!manualFlags['primera-cuota']){
+                const { totalCuota } = calcularCuota();
+                actualizarCampo('primera-cuota', (chkPrimera && monto > 0) ? totalCuota : 0);
+            }
+            
+            actualizarCampo('adicionales', parseNumber(document.getElementById('desc-adicionales').value));
+            calcularTotalDescuentos();
+        }
+
+        function calcularTotalDescuentos() {
+            let camposHipotecarios = ['estudio', 'buro', 'cancelacion', 'derechocanc', 'registrales', 'mutuo', 'fijos-hipo', 'valuo', 'acciones', 'primera-cuota', 'adicionales'];
+            let camposPersonales = ['estudio', 'buro', 'mutuo_personal', 'acciones', 'primera-cuota', 'adicionales'];
+            let idsActivos = tipoDeduccionActual === 'hipotecaria' ? camposHipotecarios : camposPersonales;
+            
+            let suma = 0;
+            for (let key in manualFlags) {
+                const inputVal = parseNumber(document.getElementById(`desc-${key}`).value);
+                document.getElementById(`txt-${key}`).innerText = `$${formatNumber(inputVal)}`;
+                if(idsActivos.includes(key)) suma += inputVal;
+            }
+            
+            const monto = parseNumber(document.getElementById('monto').value);
+            const desembolso = monto > 0 ? (monto - suma) : 0;
+            
+            document.getElementById('desc-total-sum').innerText = `$${formatNumber(suma)}`;
+            document.getElementById('desc-desembolso').innerText = `$${formatNumber(desembolso)}`;
+        }
+
+        // --- 7. EXTRAS (CÁLCULOS DE FECHAS) ---
+        function calcFutureDate() {
+            let days = parseInt(document.getElementById('ext-days').value) || 0;
+            let weeks = parseInt(document.getElementById('ext-weeks').value) || 0;
+            let months = parseInt(document.getElementById('ext-months').value) || 0;
+            let years = parseInt(document.getElementById('ext-years').value) || 0;
+
+            let d = new Date(); 
+            d.setFullYear(d.getFullYear() + years);
+            d.setMonth(d.getMonth() + months);
+            d.setDate(d.getDate() + days + (weeks * 7));
+
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('res-future-date').innerText = d.toLocaleDateString('es-ES', options);
+        }
+
+        function calcElapsedTime() {
+            let inputDateStr = document.getElementById('ext-past-date').value;
+            if(!inputDateStr) {
+                document.getElementById('res-elapsed').innerText = "-";
+                return;
+            }
+            let past = new Date(inputDateStr + 'T00:00:00');
+            let today = new Date();
+            today.setHours(0,0,0,0);
+
+            if (past > today) {
+                document.getElementById('res-elapsed').innerText = "La fecha no debe ser futura";
+                return;
+            }
+
+            let years = today.getFullYear() - past.getFullYear();
+            let months = today.getMonth() - past.getMonth();
+            let days = today.getDate() - past.getDate();
+
+            if (days < 0) {
+                months--;
+                let prevMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+                days += prevMonth.getDate();
+            }
+            if (months < 0) {
+                years--;
+                months += 12;
+            }
+
+            document.getElementById('res-elapsed').innerText = `${years} años, ${months} meses, ${days} días`;
+        }
+
+        function calcDaysRemaining() {
+            let inputDateStr = document.getElementById('ext-future-date').value;
+            if(!inputDateStr) {
+                document.getElementById('res-remaining').innerText = "0";
+                return;
+            }
+            let target = new Date(inputDateStr + 'T00:00:00');
+            let today = new Date();
+            today.setHours(0,0,0,0);
+            
+            let diffTime = target - today;
+            let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays < 0) diffDays = 0; 
+            
+            document.getElementById('res-remaining').innerText = diffDays;
+        }
+
+        function calcAge() {
+            let inputDateStr = document.getElementById('ext-birth-date').value;
+            if(!inputDateStr) {
+                document.getElementById('res-age').innerText = "0";
+                return;
+            }
+            let birth = new Date(inputDateStr + 'T00:00:00');
+            let today = new Date();
+            today.setHours(0,0,0,0);
+            
+            let age = today.getFullYear() - birth.getFullYear();
+            let m = today.getMonth() - birth.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+                age--;
+            }
+            if(age < 0) age = 0;
+            
+            document.getElementById('res-age').innerText = age;
+        }
+
+        // Inicialización General
+        window.onload = function() {
+            calcularCuota();
+            calcFutureDate();
+            calcElapsedTime();
+            calcDaysRemaining();
+            calcAge();
+        };
+    </script>
 </body>
 </html>
