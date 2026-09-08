@@ -62,6 +62,286 @@
         }
         
         .overlay { background-color: rgba(15, 23, 42, 0.5); backdrop-filter: blur(4px); }
+
+        /* =========================================
+           1. AJUSTE DE ZOOM AUTOMÁTICO PARA PC 
+           ========================================= */
+        @media (min-width: 1024px) { html { font-size: 14px; } }
+        @media (min-width: 1536px) { html { font-size: 15px; } }
+
+        /* =========================================
+           2. IMPRESIÓN PROFESIONAL DE UNA SOLA PÁGINA
+           - La pestaña activa se ajusta proporcionalmente.
+           - No se deforma: ancho/alto conservan la misma escala.
+           - El tamaño normal se mantiene siempre que sea posible.
+           ========================================= */
+        #print-header { display: none; }
+
+        @media print {
+            @page {
+                size: letter portrait;
+                margin: 7mm 8mm;
+            }
+
+            :root { color-scheme: light; }
+
+            html,
+            body {
+                background: #fff !important;
+                color: #0f172a !important;
+                font-size: 10.5pt !important;
+                line-height: 1.32 !important;
+                width: 100% !important;
+                min-height: 100% !important;
+                height: auto !important;
+                overflow: visible !important;
+                zoom: 1 !important;
+            }
+
+            body {
+                display: block !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            /* Interfaz de la aplicación: no debe aparecer en papel */
+            #sidebar,
+            #sidebar-overlay,
+            header,
+            #modal-tablas,
+            button:not(.toggle-btn-active),
+            .group-hover\\:opacity-100 {
+                display: none !important;
+            }
+
+            /* Encabezado compacto de impresión */
+            #print-header {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                gap: 12px !important;
+                margin: 0 0 4mm 0 !important;
+                padding: 0 0 2.5mm 0 !important;
+                border-bottom: 1.5px solid #007550 !important;
+                break-after: avoid-page !important;
+                page-break-after: avoid !important;
+            }
+
+            #print-header-title {
+                margin: 0 !important;
+                color: #007550 !important;
+                font-size: 16pt !important;
+                line-height: 1.05 !important;
+                font-weight: 900 !important;
+            }
+
+            #print-header-subtitle,
+            #print-header-date {
+                margin: 0 !important;
+                color: #64748b !important;
+                font-size: 7.5pt !important;
+                font-weight: 600 !important;
+            }
+
+            main {
+                display: block !important;
+                width: 100% !important;
+                min-height: 0 !important;
+                height: auto !important;
+                overflow: visible !important;
+                background: #fff !important;
+                position: static !important;
+            }
+
+            main > .flex-1.overflow-y-auto {
+                display: block !important;
+                width: 100% !important;
+                height: auto !important;
+                min-height: 0 !important;
+                overflow: visible !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            /* Solo la pestaña activa entra en la hoja */
+            .tab-content {
+                display: block !important;
+                width: 100% !important;
+                max-width: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                transform-origin: top left !important;
+            }
+
+            .tab-content.hidden { display: none !important; }
+
+            .tab-content > div {
+                width: 100% !important;
+                max-width: none !important;
+                margin: 0 !important;
+                background: #fff !important;
+                box-shadow: none !important;
+            }
+
+            /*
+             * No forzamos zoom desde CSS/JS.
+             * Así Chrome/Edge conserva habilitada la opción:
+             * Ctrl+P → Más configuraciones → Escala,
+             * para que puedas aumentarla o reducirla desde la vista previa
+             * sin que el documento llegue ya "aplastado".
+             */
+            .tab-content.print-fit {
+                zoom: 1 !important;
+            }
+
+            /* Espaciado razonable; se escala completo, no se aplasta */
+            .mb-10 { margin-bottom: 5mm !important; }
+            .mb-8 { margin-bottom: 4mm !important; }
+            .mt-10 { margin-top: 4mm !important; }
+            .pb-24 { padding-bottom: 0 !important; }
+
+            .text-4xl { font-size: 18pt !important; }
+            .text-3xl { font-size: 15pt !important; }
+            .text-2xl { font-size: 12pt !important; }
+            .text-xl { font-size: 10.5pt !important; }
+
+            /* Evita cortes feos dentro de tarjetas y filas */
+            .grid > *,
+            #tabla-deducciones > div,
+            li,
+            .border-2,
+            .rounded-3xl,
+            .rounded-\\[2rem\\],
+            .rounded-\\[2\\.5rem\\] {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+            }
+
+            h1, h2, h3, h4 {
+                color: #007550 !important;
+                break-after: avoid !important;
+                page-break-after: avoid !important;
+            }
+
+            /* Selector de tipo de crédito */
+            button.toggle-btn-active {
+                display: block !important;
+                background: transparent !important;
+                color: #007550 !important;
+                font-size: 10pt !important;
+                font-weight: 900 !important;
+                padding: 0 !important;
+                margin: 0 0 2.5mm 0 !important;
+                box-shadow: none !important;
+                border: 0 !important;
+                text-align: left !important;
+                text-transform: uppercase !important;
+            }
+
+            .flex.p-1\\.5.bg-grayLight {
+                background: transparent !important;
+                border: 0 !important;
+                padding: 0 !important;
+                margin-bottom: 2.5mm !important;
+                justify-content: flex-start !important;
+            }
+
+            /* Deducciones: estructura de tres columnas compacta pero legible */
+            #tabla-deducciones > div {
+                padding: 2.4mm 0 !important;
+            }
+
+            #tabla-deducciones .w-full.md\\:w-2\\/5 {
+                width: 44% !important;
+                flex: 0 0 44% !important;
+                margin-bottom: 0 !important;
+            }
+
+            #tabla-deducciones .w-full.md\\:w-1\\/5 {
+                width: 16% !important;
+                flex: 0 0 16% !important;
+                text-align: right !important;
+                justify-content: flex-end !important;
+            }
+
+            #tabla-deducciones .w-full.md\\:w-2\\/5:nth-child(2) {
+                width: 40% !important;
+                flex: 0 0 40% !important;
+            }
+
+            #tabla-deducciones .pl-\\[52px\\],
+            #tabla-deducciones .md\\:pl-0 {
+                padding-left: 0 !important;
+                margin-top: 0 !important;
+            }
+
+            #tabla-deducciones .w-10.h-10 {
+                width: 8mm !important;
+                height: 8mm !important;
+                min-width: 8mm !important;
+                font-size: 8.5pt !important;
+            }
+
+            /* Campos se imprimen como valores limpios */
+            input,
+            input[type="date"] {
+                color: #0f172a !important;
+                background: transparent !important;
+                border: 0 !important;
+                border-bottom: 1px dashed #cbd5e1 !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+                padding: 1px 0 !important;
+                height: auto !important;
+            }
+
+            input[type="checkbox"] {
+                appearance: auto !important;
+                -webkit-appearance: auto !important;
+                width: 11px !important;
+                height: 11px !important;
+            }
+
+            /* Totales destacados sin ocupar media hoja */
+            .p-6.md\\:p-8 { padding: 3.5mm 4.5mm !important; }
+            #desc-total-sum,
+            #desc-desembolso { font-size: 16pt !important; }
+            #res-total-cuota { font-size: 19pt !important; }
+
+            * {
+                text-shadow: none !important;
+                box-shadow: none !important;
+                animation: none !important;
+                transition: none !important;
+            }
+
+            .bg-primary {
+                background-color: #007550 !important;
+                color: #fff !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .bg-secondary\\/20,
+            .bg-grayLight {
+                background-color: #f8fafc !important;
+                border-color: #e2e8f0 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .bg-secondary\\/40 {
+                background-color: #e5f0a3 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .text-primary { color: #007550 !important; }
+            .text-secondary { color: #8aa000 !important; }
+            .text-dark,
+            .text-gray-700,
+            .text-gray-600 { color: #111827 !important; }
+        }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden text-sm md:text-base">
@@ -109,6 +389,15 @@
     <!-- CONTENIDO PRINCIPAL -->
     <main class="flex-1 flex flex-col overflow-hidden bg-grayLight relative">
         
+        <!-- CABECERA EXCLUSIVA DE IMPRESIÓN (Ctrl+P) -->
+        <div id="print-header" aria-hidden="true">
+            <div>
+                <h1 id="print-header-title">Calculador de Cuota</h1>
+                <p id="print-header-subtitle">Resumen generado</p>
+            </div>
+            <p id="print-header-date"></p>
+        </div>
+
         <!-- HEADER (VISIBLE EN TODAS LAS PANTALLAS) -->
         <header class="flex items-center p-5 bg-white shadow-sm z-30 rounded-b-3xl">
             <button onclick="toggleSidebar()" class="text-2xl text-primary p-2 bg-secondary/30 rounded-xl focus:outline-none hover:bg-secondary/50 transition">
@@ -753,7 +1042,18 @@
             const activeBtn = document.getElementById('btn-' + tabId);
             activeBtn.classList.add('active-tab', 'text-primary');
 
-            document.getElementById('mobile-title').innerText = activeBtn.querySelector('span').innerText;
+            const currentTitle = activeBtn.querySelector('span').innerText;
+            document.getElementById('mobile-title').innerText = currentTitle;
+
+            // Mantener sincronizada la cabecera del modo impresión (Ctrl+P).
+            const printTitle = document.getElementById('print-header-title');
+            const printDate = document.getElementById('print-header-date');
+            if (printTitle) printTitle.innerText = currentTitle;
+            if (printDate) {
+                printDate.innerText = new Date().toLocaleDateString('es-SV', {
+                    day: '2-digit', month: '2-digit', year: 'numeric'
+                });
+            }
 
             if (tabId === 'descuentos') recalcularDescuentos();
             
@@ -1205,6 +1505,28 @@
             document.getElementById('res-age').innerText = age;
         }
 
+        // --- PREPARACIÓN DE IMPRESIÓN ---
+        // Dejamos que el navegador controle la escala desde Ctrl+P.
+        // Esto evita un zoom previo que reduzca demasiado el contenido.
+        // La pestaña activa sigue siendo la única que se imprime.
+        function prepararImpresion() {
+            const activeTab = document.querySelector('.tab-content:not(.hidden)');
+            if (!activeTab) return;
+
+            activeTab.classList.add('print-fit');
+            activeTab.style.removeProperty('--print-zoom');
+        }
+
+        function limpiarImpresion() {
+            document.querySelectorAll('.tab-content.print-fit').forEach(tab => {
+                tab.classList.remove('print-fit');
+                tab.style.removeProperty('--print-zoom');
+            });
+        }
+
+        window.addEventListener('beforeprint', prepararImpresion);
+        window.addEventListener('afterprint', limpiarImpresion);
+
         // Inicialización General
         window.onload = function() {
             calcularCuota();
@@ -1212,6 +1534,19 @@
             calcElapsedTime();
             calcDaysRemaining();
             calcAge();
+
+            // Inicializar la cabecera de impresión con la pestaña activa.
+            const activeButton = document.querySelector('.tab-btn.active-tab');
+            const printTitle = document.getElementById('print-header-title');
+            const printDate = document.getElementById('print-header-date');
+            if (activeButton && printTitle) {
+                printTitle.innerText = activeButton.querySelector('span').innerText;
+            }
+            if (printDate) {
+                printDate.innerText = new Date().toLocaleDateString('es-SV', {
+                    day: '2-digit', month: '2-digit', year: 'numeric'
+                });
+            }
         };
     </script>
 </body>
