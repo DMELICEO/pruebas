@@ -3,1551 +3,644 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Menú Financiero Interactivo</title>
-    
-    <!-- CONFIGURACIÓN PARA PANTALLA DE INICIO (WEB APP) -->
-    <meta name="theme-color" content="#007550">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Mi Cuota">
-    
-    <!-- Íconos para la pantalla de inicio -->
-    <link rel="icon" type="image/png" sizes="192x192" href="logo.png">
-    <link rel="apple-touch-icon" href="logo.png">
-
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#007550',
-                        primaryHover: '#00593c',
-                        secondary: '#bed63f',
-                        white: '#FFFFFF',
-                        dark: '#1e293b',
-                        grayLight: '#f8fafc',
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'system-ui', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
-    <!-- FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Gestion</title>
     <style>
-        body { 
-            background-color: #f1f5f9; 
-            color: #1e293b;
-            -webkit-tap-highlight-color: transparent;
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+        :root {
+            --bg-body: #f1f5f9;
+            --surface: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --radius: 12px;
+            
+            --c-s1: #10b981; /* Trabajando */
+            --c-s2: #f59e0b; /* Pendientes */
+            --c-s3: #3b82f6; /* Desembolsado */
+            --c-s4: #ef4444; /* Denegado */
+            --c-s5: #475569; /* Bóveda */
         }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-body); color: var(--text-main); min-height: 100vh; padding-bottom: 4rem; overflow-x: hidden; }
+
+        /* Cabecera Fija */
+        .header-sticky { position: sticky; top: 0; z-index: 50; background: var(--surface); box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding-top: 1rem; }
+        .tabs { display: flex; gap: 0.6rem; overflow-x: auto; padding: 0.5rem 1.5rem 1rem 1.5rem; scrollbar-width: none; }
+        .tabs::-webkit-scrollbar { display: none; }
+        .tab-btn { flex: 0 0 auto; padding: 0.6rem 1rem; border-radius: 20px; border: none; background: #f8fafc; color: var(--text-muted); font-weight: 700; font-size: 0.8rem; cursor: pointer; transition: 0.3s; text-transform: uppercase; letter-spacing: 0.5px;}
         
-        .active-tab {
-            background-color: #bed63f;
-            color: #007550;
-            font-weight: 700;
-        }
-        .toggle-btn-active {
-            background-color: #007550;
-            color: #FFFFFF;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
+        .tab-btn.active[data-state="s_1"] { background: var(--c-s1); color: white; box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
+        .tab-btn.active[data-state="s_2"] { background: var(--c-s2); color: white; box-shadow: 0 4px 12px rgba(245,158,11,0.3); }
+        .tab-btn.active[data-state="s_3"] { background: var(--c-s3); color: white; box-shadow: 0 4px 12px rgba(59,130,246,0.3); }
+        .tab-btn.active[data-state="s_4"] { background: var(--c-s4); color: white; box-shadow: 0 4px 12px rgba(239,68,68,0.3); }
+        .tab-btn.active[data-state="s_5"] { background: var(--c-s5); color: white; box-shadow: 0 4px 12px rgba(71,85,105,0.3); }
+
+        main { max-width: 800px; margin: 0 auto; padding: 1.5rem; }
         
-        .overlay { background-color: rgba(15, 23, 42, 0.5); backdrop-filter: blur(4px); }
+        /* Controles (Botones en Iconos y Filtro) */
+        .controls-container { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+        
+        .top-actions { display: flex; gap: 0.6rem; }
+        .top-icon-btn { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; border: none; cursor: pointer; transition: 0.2s; }
+        .top-icon-btn.add { background: var(--text-main); color: white; box-shadow: 0 4px 10px rgba(15,23,42,0.2); }
+        .top-icon-btn.cal { background: white; border: 1px solid var(--border); color: var(--text-main); box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .top-icon-btn:active { transform: scale(0.95); }
+        
+        /* Filtro de Mes Pequeñito */
+        .month-filter-select { padding: 0.4rem 0.8rem; border-radius: 20px; border: 1px solid var(--border); background: var(--surface); font-weight: 600; font-size: 0.75rem; color: var(--text-muted); outline: none; cursor: pointer; width: auto; appearance: none; padding-right: 1.8rem; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 0.5rem center; background-size: 1em; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
 
-        /* =========================================
-           1. AJUSTE DE ZOOM AUTOMÁTICO PARA PC 
-           ========================================= */
-        @media (min-width: 1024px) { html { font-size: 14px; } }
-        @media (min-width: 1536px) { html { font-size: 15px; } }
+        /* Tarjeta */
+        .card { background: var(--surface); border-radius: var(--radius); box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin-bottom: 1.5rem; border: 1px solid var(--border); transition: transform 0.3s, box-shadow 0.3s; position: relative; }
+        .card.highlight { box-shadow: 0 0 0 3px var(--c-s1), 0 10px 25px rgba(16,185,129,0.3); transform: scale(1.02); }
+        
+        .card-header { padding: 1.2rem 1.5rem; position: relative; }
+        .pinned-icon { position: absolute; top: -10px; left: 15px; font-size: 1.2rem; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1)); z-index: 2; transition: 0.2s; }
+        .card:not(.is-pinned) .pinned-icon { display: none; }
+        
+        /* Insignia de origen para la bóveda */
+        .origin-badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.75rem; font-weight: 800; color: white; margin-bottom: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .bg-s_1 { background: var(--c-s1); }
+        .bg-s_2 { background: var(--c-s2); }
+        .bg-s_3 { background: var(--c-s3); }
+        .bg-s_4 { background: var(--c-s4); }
+        
+        /* Contenedor de Textos Flexibles */
+        .card-inputs { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; width: 85%; }
+        
+        /* Placeholders Nativos */
+        [contenteditable]:empty::before { content: attr(data-placeholder); color: #94a3b8; pointer-events: none; display: inline-block; }
 
-        /* =========================================
-           2. IMPRESIÓN PROFESIONAL DE UNA SOLA PÁGINA
-           - La pestaña activa se ajusta proporcionalmente.
-           - No se deforma: ancho/alto conservan la misma escala.
-           - El tamaño normal se mantiene siempre que sea posible.
-           ========================================= */
-        #print-header { display: none; }
+        .clean-input-title { font-size: 1.15rem; font-weight: 800; color: var(--text-main); outline: none; border-bottom: 1px dashed transparent; transition: 0.2s; display: inline-block; min-width: 150px; max-width: 100%; word-wrap: break-word; word-break: break-word; }
+        .clean-input-title:focus { border-bottom-color: var(--text-muted); }
+        
+        .meta-input { font-size: 0.95rem; font-weight: 600; color: var(--text-main); border: none; background: transparent; outline: none; width: 90px; text-align: center; border-bottom: 1px dashed transparent; }
+        .meta-input:focus { border-bottom-color: var(--text-muted); }
+        .meta-input::placeholder { color: #94a3b8; font-weight: 500; }
+        .date-input { width: 95px; }
+        .dot-sep { color: #cbd5e1; }
+        
+        .subtitle-input { font-size: 0.85rem; color: var(--text-muted); font-weight: 600; outline: none; width: 100%; text-transform: uppercase; margin-top: 0.2rem; min-height: 1.2em; word-wrap: break-word; word-break: break-word; display: block; border-bottom: 1px dashed transparent; }
+        .subtitle-input:focus { border-bottom-color: var(--border); }
 
-        @media print {
-            @page {
-                size: letter portrait;
-                margin: 7mm 8mm;
-            }
+        /* Progreso */
+        .progress-bar { height: 4px; background: var(--border); width: 100%; position: absolute; bottom: 0; left: 0; }
+        .progress-fill { height: 100%; width: 0%; transition: width 0.4s ease, background 0.4s; }
+        .card.s_1 .progress-fill { background: var(--c-s1); }
+        .card.s_2 .progress-fill { background: var(--c-s2); }
+        .card.s_3 .progress-fill { background: var(--c-s3); }
+        .card.s_4 .progress-fill { background: var(--c-s4); }
+        .card.s_5 .progress-fill { background: var(--c-s5); }
 
-            :root { color-scheme: light; }
+        /* Controles ocultos (3 puntos) */
+        .menu-container { position: absolute; top: 1rem; right: 1rem; }
+        .menu-btn { background: transparent; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer; padding: 0.2rem 0.5rem; border-radius: 8px; }
+        .menu-dropdown { position: absolute; top: 100%; right: 0; background: white; box-shadow: 0 10px 25px rgba(0,0,0,0.15); border: 1px solid var(--border); border-radius: 8px; width: 180px; z-index: 10; display: none; flex-direction: column; overflow: hidden; }
+        .menu-dropdown.show { display: flex; }
+        .menu-item { padding: 0.8rem 1rem; text-align: left; background: none; border: none; border-bottom: 1px solid #f1f5f9; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: var(--text-main); }
+        .menu-item:hover { background: #f8fafc; }
+        
+        .collapse-toggle { position: absolute; bottom: -15px; left: 50%; transform: translateX(-50%); width: 30px; height: 30px; background: white; border: 1px solid var(--border); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted); box-shadow: 0 2px 5px rgba(0,0,0,0.05); z-index: 2; transition: 0.3s; }
+        .card.collapsed .collapse-toggle { transform: translateX(-50%) rotate(-180deg); }
 
-            html,
-            body {
-                background: #fff !important;
-                color: #0f172a !important;
-                font-size: 10.5pt !important;
-                line-height: 1.32 !important;
-                width: 100% !important;
-                min-height: 100% !important;
-                height: auto !important;
-                overflow: visible !important;
-                zoom: 1 !important;
-            }
+        /* Panel Checklist */
+        .checklist-panel { padding: 2rem 1.5rem 1.5rem 1.5rem; transition: max-height 0.4s ease, opacity 0.3s; overflow: hidden; opacity: 1; }
+        .card.collapsed .checklist-panel { max-height: 0; padding-top: 0; padding-bottom: 0; opacity: 0; }
+        
+        /* Controles de Categoría (Colapsables) */
+        .cat-header-row { display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.8rem; }
+        .cat-toggle-btn { display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; cursor: pointer; color: var(--text-muted); font-size: 0.75rem; transition: transform 0.3s ease; border-radius: 4px; }
+        .cat-toggle-btn:hover { background: #f1f5f9; color: var(--text-main); }
+        .category.collapsed .cat-toggle-btn { transform: rotate(-90deg); }
+        .category.collapsed .task-list, .category.collapsed .add-input-group { display: none !important; }
 
-            body {
-                display: block !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
+        .task-list { list-style: none; padding-left: 1.5rem; }
+        .task-item { display: flex; align-items: flex-start; gap: 0.8rem; margin-bottom: 0.8rem; }
+        
+        .task-item input[type="checkbox"] { appearance: none; width: 22px; height: 22px; border: 2px solid #cbd5e1; border-radius: 6px; cursor: pointer; display: grid; place-content: center; transition: 0.2s; flex-shrink: 0; }
+        .task-item input[type="checkbox"]:checked { background: var(--text-main); border-color: var(--text-main); }
+        .task-item input[type="checkbox"]:checked::before { content: "✓"; color: white; font-weight: 800; font-size: 14px; }
+        .task-input { flex: 1; border: none; background: transparent; font-size: 0.9rem; color: #334155; font-weight: 500; outline: none; border-bottom: 1px dashed transparent; }
+        .task-input::placeholder { color: #cbd5e1; }
+        .task-item.done .task-input { text-decoration: line-through; color: #94a3b8; }
 
-            /* Interfaz de la aplicación: no debe aparecer en papel */
-            #sidebar,
-            #sidebar-overlay,
-            header,
-            #modal-tablas,
-            button:not(.toggle-btn-active),
-            .group-hover\\:opacity-100 {
-                display: none !important;
-            }
+        .add-input-group { display: flex; gap: 0.5rem; margin-top: 0.5rem; padding-left: 1.5rem; }
+        .clean-add-input { flex: 1; padding: 0.5rem 0.8rem; border: 1px solid var(--border); border-radius: 8px; font-size: 0.85rem; outline: none; background: #f8fafc; }
 
-            /* Encabezado compacto de impresión */
-            #print-header {
-                display: flex !important;
-                align-items: center !important;
-                justify-content: space-between !important;
-                gap: 12px !important;
-                margin: 0 0 4mm 0 !important;
-                padding: 0 0 2.5mm 0 !important;
-                border-bottom: 1.5px solid #007550 !important;
-                break-after: avoid-page !important;
-                page-break-after: avoid !important;
-            }
+        /* Calendario Mejorado */
+        #calendarModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center; z-index: 100; padding: 1rem; }
+        .cal-content { background: var(--surface); padding: 1.5rem; border-radius: 20px; width: 100%; max-width: 380px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); max-height: 90vh; display: flex; flex-direction: column; }
+        .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        
+        .month-picker { font-size: 1.05rem; font-weight: 700; border: 1px solid var(--border); border-radius: 8px; padding: 0.4rem; background: #f8fafc; color: var(--text-main); outline: none; font-family: inherit; cursor: pointer; text-align: center; flex: 1; margin: 0 0.5rem; }
+        .icon-btn { background: #f1f5f9; border: none; width: 36px; height: 36px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        
+        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; }
+        .day-name { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); padding-bottom: 0.5rem; }
+        .day-cell { padding: 0.8rem 0; border-radius: 12px; font-size: 0.95rem; font-weight: 600; cursor: pointer; position: relative; transition: 0.2s; border: 1px solid transparent; }
+        .day-cell:hover { background: #f8fafc; }
+        .day-cell.today { background: #eff6ff; color: var(--c-s3); border-color: #bfdbfe; }
+        .day-cell.active-toggle { background: #f1f5f9; border-color: var(--border); }
+        
+        .dots-container { display: flex; gap: 2px; justify-content: center; position: absolute; bottom: 4px; left: 0; width: 100%; }
+        .dot-marker { width: 6px; height: 6px; border-radius: 50%; }
+        .dot-marker.s_1 { background: var(--c-s1); }
+        .dot-marker.s_2 { background: var(--c-s2); }
+        .dot-marker.s_3 { background: var(--c-s3); }
+        .dot-marker.s_4 { background: var(--c-s4); }
+        .dot-marker.s_5 { background: var(--c-s5); }
 
-            #print-header-title {
-                margin: 0 !important;
-                color: #007550 !important;
-                font-size: 16pt !important;
-                line-height: 1.05 !important;
-                font-weight: 900 !important;
-            }
+        .day-details { margin-top: 1rem; border-top: 1px dashed var(--border); padding-top: 1rem; display: none; overflow-y: auto; text-align: left; }
+        .detail-card { background: #f1f5f9; padding: 0.8rem; border-radius: 8px; margin-bottom: 0.5rem; border-left: 4px solid var(--border); }
+        .detail-card.s_1 { border-left-color: var(--c-s1); }
+        .detail-card.s_2 { border-left-color: var(--c-s2); }
+        .detail-card.s_3 { border-left-color: var(--c-s3); }
+        .detail-card.s_4 { border-left-color: var(--c-s4); }
+        .detail-card.s_5 { border-left-color: var(--c-s5); }
+        .btn-jump { margin-top: 0.5rem; background: var(--text-main); color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.8rem; cursor: pointer; font-weight: 600; width: 100%; }
 
-            #print-header-subtitle,
-            #print-header-date {
-                margin: 0 !important;
-                color: #64748b !important;
-                font-size: 7.5pt !important;
-                font-weight: 600 !important;
-            }
-
-            main {
-                display: block !important;
-                width: 100% !important;
-                min-height: 0 !important;
-                height: auto !important;
-                overflow: visible !important;
-                background: #fff !important;
-                position: static !important;
-            }
-
-            main > .flex-1.overflow-y-auto {
-                display: block !important;
-                width: 100% !important;
-                height: auto !important;
-                min-height: 0 !important;
-                overflow: visible !important;
-                padding: 0 !important;
-                margin: 0 !important;
-            }
-
-            /* Solo la pestaña activa entra en la hoja */
-            .tab-content {
-                display: block !important;
-                width: 100% !important;
-                max-width: none !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                transform-origin: top left !important;
-            }
-
-            .tab-content.hidden { display: none !important; }
-
-            .tab-content > div {
-                width: 100% !important;
-                max-width: none !important;
-                margin: 0 !important;
-                background: #fff !important;
-                box-shadow: none !important;
-            }
-
-            /*
-             * No forzamos zoom desde CSS/JS.
-             * Así Chrome/Edge conserva habilitada la opción:
-             * Ctrl+P → Más configuraciones → Escala,
-             * para que puedas aumentarla o reducirla desde la vista previa
-             * sin que el documento llegue ya "aplastado".
-             */
-            .tab-content.print-fit {
-                zoom: 1 !important;
-            }
-
-            /* Espaciado razonable; se escala completo, no se aplasta */
-            .mb-10 { margin-bottom: 5mm !important; }
-            .mb-8 { margin-bottom: 4mm !important; }
-            .mt-10 { margin-top: 4mm !important; }
-            .pb-24 { padding-bottom: 0 !important; }
-
-            .text-4xl { font-size: 18pt !important; }
-            .text-3xl { font-size: 15pt !important; }
-            .text-2xl { font-size: 12pt !important; }
-            .text-xl { font-size: 10.5pt !important; }
-
-            /* Evita cortes feos dentro de tarjetas y filas */
-            .grid > *,
-            #tabla-deducciones > div,
-            li,
-            .border-2,
-            .rounded-3xl,
-            .rounded-\\[2rem\\],
-            .rounded-\\[2\\.5rem\\] {
-                break-inside: avoid !important;
-                page-break-inside: avoid !important;
-            }
-
-            h1, h2, h3, h4 {
-                color: #007550 !important;
-                break-after: avoid !important;
-                page-break-after: avoid !important;
-            }
-
-            /* Selector de tipo de crédito */
-            button.toggle-btn-active {
-                display: block !important;
-                background: transparent !important;
-                color: #007550 !important;
-                font-size: 10pt !important;
-                font-weight: 900 !important;
-                padding: 0 !important;
-                margin: 0 0 2.5mm 0 !important;
-                box-shadow: none !important;
-                border: 0 !important;
-                text-align: left !important;
-                text-transform: uppercase !important;
-            }
-
-            .flex.p-1\\.5.bg-grayLight {
-                background: transparent !important;
-                border: 0 !important;
-                padding: 0 !important;
-                margin-bottom: 2.5mm !important;
-                justify-content: flex-start !important;
-            }
-
-            /* Deducciones: estructura de tres columnas compacta pero legible */
-            #tabla-deducciones > div {
-                padding: 2.4mm 0 !important;
-            }
-
-            #tabla-deducciones .w-full.md\\:w-2\\/5 {
-                width: 44% !important;
-                flex: 0 0 44% !important;
-                margin-bottom: 0 !important;
-            }
-
-            #tabla-deducciones .w-full.md\\:w-1\\/5 {
-                width: 16% !important;
-                flex: 0 0 16% !important;
-                text-align: right !important;
-                justify-content: flex-end !important;
-            }
-
-            #tabla-deducciones .w-full.md\\:w-2\\/5:nth-child(2) {
-                width: 40% !important;
-                flex: 0 0 40% !important;
-            }
-
-            #tabla-deducciones .pl-\\[52px\\],
-            #tabla-deducciones .md\\:pl-0 {
-                padding-left: 0 !important;
-                margin-top: 0 !important;
-            }
-
-            #tabla-deducciones .w-10.h-10 {
-                width: 8mm !important;
-                height: 8mm !important;
-                min-width: 8mm !important;
-                font-size: 8.5pt !important;
-            }
-
-            /* Campos se imprimen como valores limpios */
-            input,
-            input[type="date"] {
-                color: #0f172a !important;
-                background: transparent !important;
-                border: 0 !important;
-                border-bottom: 1px dashed #cbd5e1 !important;
-                border-radius: 0 !important;
-                box-shadow: none !important;
-                padding: 1px 0 !important;
-                height: auto !important;
-            }
-
-            input[type="checkbox"] {
-                appearance: auto !important;
-                -webkit-appearance: auto !important;
-                width: 11px !important;
-                height: 11px !important;
-            }
-
-            /* Totales destacados sin ocupar media hoja */
-            .p-6.md\\:p-8 { padding: 3.5mm 4.5mm !important; }
-            #desc-total-sum,
-            #desc-desembolso { font-size: 16pt !important; }
-            #res-total-cuota { font-size: 19pt !important; }
-
-            * {
-                text-shadow: none !important;
-                box-shadow: none !important;
-                animation: none !important;
-                transition: none !important;
-            }
-
-            .bg-primary {
-                background-color: #007550 !important;
-                color: #fff !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
-
-            .bg-secondary\\/20,
-            .bg-grayLight {
-                background-color: #f8fafc !important;
-                border-color: #e2e8f0 !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
-
-            .bg-secondary\\/40 {
-                background-color: #e5f0a3 !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
-
-            .text-primary { color: #007550 !important; }
-            .text-secondary { color: #8aa000 !important; }
-            .text-dark,
-            .text-gray-700,
-            .text-gray-600 { color: #111827 !important; }
-        }
+        /* Toast Notifications */
+        #toast { visibility: hidden; min-width: 250px; background-color: #1e293b; color: #fff; text-align: center; border-radius: 30px; padding: 12px; position: fixed; z-index: 1000; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 0.9rem; font-weight: 500; opacity: 0; transition: opacity 0.3s; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+        #toast.show { visibility: visible; opacity: 1; }
     </style>
 </head>
-<body class="flex h-screen overflow-hidden text-sm md:text-base">
+<body>
 
-    <!-- OVERLAY MÓVIL Y ESCRITORIO -->
-    <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 z-40 overlay hidden transition-opacity"></div>
+    <!-- Cabecera Fija -->
+    <div class="header-sticky">
+        <div class="tabs" id="statusBar"></div>
+    </div>
 
-    <!-- SIDEBAR / BARRA LATERAL (SIEMPRE DESPLEGABLE) -->
-    <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-secondary/30 transform -translate-x-full transition-transform duration-300 flex flex-col shadow-2xl rounded-r-3xl">
-        <div class="p-8 flex justify-between items-center">
-            <div class="flex items-center gap-3 text-primary">
-                <h1 class="text-2xl font-black tracking-tight">Menú</h1>
+    <main>
+        <!-- Controles Superiores Limpios -->
+        <div class="controls-container">
+            <div class="top-actions">
+                <button class="top-icon-btn add" onclick="addClient()" title="Nuevo Registro">➕</button>
+                <button class="top-icon-btn cal" onclick="openCalendar()" title="Ver Calendario">📅</button>
             </div>
-            <button onclick="toggleSidebar()" class="text-gray-400 hover:text-primary text-2xl p-2"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-
-        <nav class="flex-1 px-4 py-2 space-y-2 overflow-y-auto">
-            <button onclick="switchTab('calc')" id="btn-calc" class="w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-left font-medium text-gray-500 hover:bg-secondary/30 transition active-tab tab-btn">
-                <i class="fa-solid fa-calculator text-xl w-6 text-center"></i>
-                <span>Calculador de Cuota</span>
-            </button>
-
-            <button onclick="switchTab('descuentos')" id="btn-descuentos" class="w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-left font-medium text-gray-500 hover:bg-secondary/30 transition tab-btn">
-                <i class="fa-solid fa-file-invoice-dollar text-xl w-6 text-center"></i>
-                <span>Deducciones</span>
-            </button>
-
-            <button onclick="switchTab('doc-hipo')" id="btn-doc-hipo" class="w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-left font-medium text-gray-500 hover:bg-secondary/30 transition tab-btn">
-                <i class="fa-solid fa-folder-open text-xl w-6 text-center"></i>
-                <span>Doc. Hipotecarios</span>
-            </button>
-
-            <button onclick="switchTab('doc-personas')" id="btn-doc-personas" class="w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-left font-medium text-gray-500 hover:bg-secondary/30 transition tab-btn">
-                <i class="fa-solid fa-users text-xl w-6 text-center"></i>
-                <span>Doc. Personales</span>
-            </button>
-
-            <button onclick="switchTab('extras')" id="btn-extras" class="w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-left font-medium text-gray-500 hover:bg-secondary/30 transition tab-btn">
-                <i class="fa-solid fa-calendar-days text-xl w-6 text-center"></i>
-                <span>Extras</span>
-            </button>
-        </nav>
-    </aside>
-
-    <!-- CONTENIDO PRINCIPAL -->
-    <main class="flex-1 flex flex-col overflow-hidden bg-grayLight relative">
-        
-        <!-- CABECERA EXCLUSIVA DE IMPRESIÓN (Ctrl+P) -->
-        <div id="print-header" aria-hidden="true">
-            <div>
-                <h1 id="print-header-title">Calculador de Cuota</h1>
-                <p id="print-header-subtitle">Resumen generado</p>
-            </div>
-            <p id="print-header-date"></p>
-        </div>
-
-        <!-- HEADER (VISIBLE EN TODAS LAS PANTALLAS) -->
-        <header class="flex items-center p-5 bg-white shadow-sm z-30 rounded-b-3xl">
-            <button onclick="toggleSidebar()" class="text-2xl text-primary p-2 bg-secondary/30 rounded-xl focus:outline-none hover:bg-secondary/50 transition">
-                <i class="fa-solid fa-bars"></i>
-            </button>
-            <h2 class="ml-4 font-bold text-lg text-primary" id="mobile-title">Calculador de Cuota</h2>
-        </header>
-
-        <div class="flex-1 overflow-y-auto p-4 md:p-10 pb-24 scroll-smooth">
             
-            <!-- SECCIÓN 1: CALCULADOR DE CUOTA -->
-            <section id="tab-calc" class="tab-content max-w-3xl mx-auto">
-                <div class="bg-white p-5 md:p-12 rounded-[2rem] md:rounded-[2.5rem] shadow-xl shadow-black/5 border border-secondary/20">
-                    <h2 class="hidden md:block text-4xl font-extrabold text-primary mb-10 tracking-tight">Calculador de Cuota</h2>
-                    
-                    <div class="space-y-8">
-                        <div class="relative group">
-                            <label class="block text-sm uppercase tracking-widest text-gray-400 font-bold mb-3 pl-2 transition group-focus-within:text-primary">Monto del Crédito</label>
-                            <div class="relative bg-grayLight rounded-3xl overflow-hidden border-2 border-transparent transition-all group-focus-within:border-primary group-focus-within:bg-white group-focus-within:shadow-lg">
-                                <span class="absolute inset-y-0 left-0 pl-6 flex items-center text-primary font-bold text-2xl">$</span>
-                                <input type="text" inputmode="decimal" id="monto" value="" placeholder="0.00" oninput="formatRealTime(this); calcularCuota()" class="w-full pl-12 pr-6 py-5 bg-transparent text-2xl font-bold text-dark focus:outline-none">
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div class="relative group">
-                                <label class="block text-sm uppercase tracking-widest text-gray-400 font-bold mb-3 pl-2 transition group-focus-within:text-primary">Plazo (Años.Meses)</label>
-                                <input type="text" inputmode="decimal" id="plazo" value="" placeholder="0.0" oninput="calcularCuota()" class="w-full px-6 py-4 rounded-3xl bg-grayLight border-2 border-transparent font-semibold text-lg text-dark transition-all focus:border-primary focus:bg-white focus:shadow-lg focus:outline-none">
-                                <p class="text-sm text-primary mt-3 pl-2 font-semibold flex items-center gap-2"><i class="fa-solid fa-clock"></i> <span id="meses-info">0 meses en total</span></p>
-                            </div>
-
-                            <div class="relative group">
-                                <label class="block text-sm uppercase tracking-widest text-gray-400 font-bold mb-3 pl-2 transition group-focus-within:text-primary">Interés Anual (%)</label>
-                                <div class="relative bg-grayLight rounded-3xl overflow-hidden border-2 border-transparent transition-all group-focus-within:border-primary group-focus-within:bg-white group-focus-within:shadow-lg">
-                                    <input type="text" inputmode="decimal" id="interes" value="" placeholder="0.00" oninput="formatRealTime(this); calcularCuota()" class="w-full pr-12 pl-6 py-4 bg-transparent font-semibold text-lg text-dark focus:outline-none">
-                                    <span class="absolute inset-y-0 right-0 pr-6 flex items-center text-gray-400 font-bold">%</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- OPCIONES AVANZADAS / HIPOTECARIAS -->
-                        <div class="mt-8 pt-6 border-t border-secondary/30">
-                            <button onclick="toggleOpcionesHipotecarias()" id="btn-toggle-hipo" class="w-full md:w-auto flex items-center justify-between md:justify-start gap-3 px-6 py-4 bg-grayLight hover:bg-secondary/20 rounded-2xl text-primary font-bold transition">
-                                <div class="flex items-center gap-3">
-                                    <i class="fa-solid fa-house-chimney"></i>
-                                    <span>Opciones de Crédito Hipotecario</span>
-                                </div>
-                                <i class="fa-solid fa-chevron-down transition-transform duration-300" id="icon-toggle-hipo"></i>
-                            </button>
-                            
-                            <div id="opciones-hipotecarias" class="hidden mt-6 space-y-6">
-                                <!-- Seguro de Residencia -->
-                                <div class="bg-grayLight p-5 md:p-6 rounded-[2rem] border-2 border-secondary/30 transition-all hover:border-primary/30">
-                                    <label class="inline-flex items-center cursor-pointer mb-4">
-                                        <input type="checkbox" id="chk-seguro-residencia" onchange="calcularCuota()" class="w-5 h-5 rounded text-primary focus:ring-primary">
-                                        <span class="ml-3 font-bold text-dark">Añadir Seguro de Residencia a la Cuota</span>
-                                    </label>
-                                    
-                                    <div id="box-seguro-residencia" class="hidden mt-2">
-                                        <div>
-                                            <label class="block text-xs uppercase text-gray-500 font-bold mb-2">Valor de la Construcción ($)</label>
-                                            <input type="text" inputmode="decimal" id="valor-construccion" placeholder="0.00" oninput="formatRealTime(this); calcularCuota()" class="w-full px-4 py-3 rounded-xl bg-white border-2 border-transparent focus:border-primary focus:outline-none font-bold text-dark">
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Monto Base Cancelación -->
-                                <div class="bg-grayLight p-5 md:p-6 rounded-[2rem] border-2 border-secondary/30 transition-all hover:border-primary/30">
-                                    <label class="block text-sm font-bold text-dark mb-2">Monto Específico para Cancelación de Hipoteca ($)</label>
-                                    <p class="text-xs text-gray-500 mb-3">Si dejas este campo vacío, la pestaña "Deducciones" usará el monto principal del crédito.</p>
-                                    <input type="text" inputmode="decimal" id="monto-cancelacion-base" placeholder="Ej: 25000.00" oninput="formatRealTime(this); recalcularDescuentos()" class="w-full md:w-1/2 px-4 py-3 rounded-xl bg-white border-2 border-transparent focus:border-primary focus:outline-none font-bold text-dark">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mt-10 p-5 md:p-8 rounded-[2rem] bg-gradient-to-br from-secondary/20 to-white border border-secondary/30 shadow-inner">
-                            <div class="space-y-5">
-                                <div class="flex justify-between items-center text-gray-500 font-medium px-2">
-                                    <span>Cuota Base</span>
-                                    <span id="res-cuota-base" class="text-xl text-dark">$0.00</span>
-                                </div>
-                                <div class="flex justify-between items-center text-gray-500 font-medium px-2">
-                                    <span>Seguro (0.1%)</span>
-                                    <span id="res-seguro" class="text-xl text-dark">$0.00</span>
-                                </div>
-                                <div class="flex justify-between items-center text-gray-500 font-medium px-2 hidden transition-all" id="row-res-seguro-residencia">
-                                    <span>Seg. Residencia</span>
-                                    <span id="res-seguro-residencia" class="text-xl text-dark">$0.00</span>
-                                </div>
-                                <div class="flex justify-between items-center pt-6 mt-2 border-t border-gray-200 px-2">
-                                    <span class="text-lg font-black uppercase tracking-wider text-primary">Total Cuota</span>
-                                    <span id="res-total-cuota" class="text-3xl md:text-4xl font-black text-primary drop-shadow-sm">$0.00</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- SECCIÓN 2: DEDUCCIONES -->
-            <section id="tab-descuentos" class="tab-content hidden max-w-5xl mx-auto">
-                <div class="bg-white p-5 md:p-10 rounded-[2rem] md:rounded-[2.5rem] shadow-xl shadow-black/5 border border-secondary/20">
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
-                        <div>
-                            <h2 class="text-3xl font-extrabold text-primary tracking-tight">Deducciones</h2>
-                            <p class="text-gray-600 mt-2 font-medium bg-secondary/30 inline-block px-4 py-1.5 rounded-full">Calculado para: <strong id="desc-monto-ref" class="text-primary">$0.00</strong></p>
-                        </div>
-                        <button onclick="reiniciarDescuentos()" class="w-full md:w-auto px-6 py-3 bg-grayLight hover:bg-secondary/40 text-primary font-bold rounded-2xl transition flex items-center justify-center gap-2 border border-secondary/30">
-                            <i class="fa-solid fa-rotate-left"></i> Restablecer
-                        </button>
-                    </div>
-
-                    <!-- TOGGLE DE TIPO DE CRÉDITO -->
-                    <div class="flex p-1.5 bg-grayLight rounded-2xl w-full max-w-md mx-auto md:mx-0 mb-8 border border-secondary/20 relative">
-                        <button id="btn-tipo-hipotecaria" onclick="cambiarTipoDeduccion('hipotecaria')" class="flex-1 py-3 text-sm font-bold rounded-xl transition-all toggle-btn-active">
-                            Hipotecaria
-                        </button>
-                        <button id="btn-tipo-personal" onclick="cambiarTipoDeduccion('personal')" class="flex-1 py-3 text-sm font-bold text-gray-400 hover:text-primary rounded-xl transition-all">
-                            Personal
-                        </button>
-                    </div>
-
-                    <!-- LISTA DE DEDUCCIONES FLEXIBLE -->
-                    <div class="bg-white border border-secondary/30 rounded-3xl overflow-hidden shadow-sm">
-                        
-                        <!-- Encabezado Desktop -->
-                        <div class="hidden md:flex bg-grayLight text-xs text-gray-500 uppercase tracking-widest border-b border-secondary/30">
-                            <div class="p-5 font-bold w-2/5">Concepto</div>
-                            <div class="p-5 font-bold text-center w-2/5">Referencia</div>
-                            <div class="p-5 font-bold text-right w-1/5">Monto ($)</div>
-                        </div>
-
-                        <!-- Contenedor de Filas -->
-                        <div class="divide-y divide-secondary/20 bg-white" id="tabla-deducciones">
-                            
-                            <!-- 1. ESTUDIO CREDITICIO (AMBOS) -->
-                            <div class="flex flex-col md:flex-row items-start md:items-center p-4 md:p-5 gap-3 md:gap-0 hover:bg-grayLight/50 transition group row-ambos">
-                                <div class="w-full md:w-2/5 flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-secondary/40 flex items-center justify-center text-primary flex-shrink-0"><i class="fa-solid fa-magnifying-glass-chart"></i></div>
-                                    <span class="font-bold text-gray-700">Estudio Crediticio / Comisión</span>
-                                </div>
-                                <div class="w-full md:w-2/5 flex flex-col md:items-center justify-start md:justify-center pl-[52px] md:pl-0 gap-2">
-                                    <button onclick="abrirModal('estudio')" class="text-primary hover:text-primaryHover bg-secondary/30 hover:bg-secondary/60 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 w-fit">
-                                        <i class="fa-solid fa-table-list"></i> Ver Tabla
-                                    </button>
-                                </div>
-                                <div class="w-full md:w-1/5 flex justify-between md:justify-end items-center pl-[52px] md:pl-0 mt-1 md:mt-0">
-                                    <span class="text-xs text-gray-400 font-bold md:hidden uppercase tracking-wider">Monto:</span>
-                                    <div class="flex justify-end items-center gap-3">
-                                        <span id="txt-estudio" class="text-lg font-medium text-gray-700"></span>
-                                        <button id="btn-estudio" onclick="activarEdicion('estudio')" class="w-8 h-8 rounded-full bg-secondary/40 md:bg-transparent md:hover:bg-secondary/50 text-primary transition flex items-center justify-center shadow-sm md:shadow-none opacity-100 md:opacity-0 group-hover:opacity-100"><i class="fa-solid fa-pen text-xs"></i></button>
-                                        <input type="text" inputmode="decimal" id="desc-estudio" class="hidden w-28 text-right p-2 border-2 border-primary rounded-xl bg-white font-bold text-gray-700" oninput="formatRealTime(this); calcularTotalDescuentos()">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- 2. BURO (AMBOS) -->
-                            <div class="flex flex-col md:flex-row items-start md:items-center p-4 md:p-5 gap-3 md:gap-0 hover:bg-grayLight/50 transition group row-ambos">
-                                <div class="w-full md:w-2/5 flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-secondary/40 flex items-center justify-center text-primary flex-shrink-0"><i class="fa-solid fa-id-card"></i></div>
-                                    <span class="font-bold text-gray-700">Consulta de Buró</span>
-                                </div>
-                                <div class="w-full md:w-2/5 flex items-center justify-start md:justify-center pl-[52px] md:pl-0 gap-2">
-                                    <span class="text-xs text-gray-400 font-bold uppercase">Personas:</span>
-                                    <input type="tel" id="num-personas-buro" value="" placeholder="1" min="1" class="w-14 p-1.5 border-2 border-secondary/50 rounded-lg text-center bg-white focus:border-primary focus:outline-none font-bold" oninput="recalcularDescuentos()">
-                                </div>
-                                <div class="w-full md:w-1/5 flex justify-between md:justify-end items-center pl-[52px] md:pl-0 mt-1 md:mt-0">
-                                    <span class="text-xs text-gray-400 font-bold md:hidden uppercase tracking-wider">Monto:</span>
-                                    <div class="flex justify-end items-center gap-3">
-                                        <span id="txt-buro" class="text-lg font-medium text-gray-700"></span>
-                                        <button id="btn-buro" onclick="activarEdicion('buro')" class="w-8 h-8 rounded-full bg-secondary/40 md:bg-transparent md:hover:bg-secondary/50 text-primary transition flex items-center justify-center shadow-sm md:shadow-none opacity-100 md:opacity-0 group-hover:opacity-100"><i class="fa-solid fa-pen text-xs"></i></button>
-                                        <input type="text" inputmode="decimal" id="desc-buro" class="hidden w-28 text-right p-2 border-2 border-primary rounded-xl bg-white font-bold text-gray-700" oninput="formatRealTime(this); calcularTotalDescuentos()">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- 3. MUTUO PERSONAL (SOLO PERSONAL) -->
-                            <div class="flex flex-col md:flex-row items-start md:items-center p-4 md:p-5 gap-3 md:gap-0 hover:bg-grayLight/50 transition group row-personal hidden">
-                                <div class="w-full md:w-2/5 flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-secondary/40 flex items-center justify-center text-primary flex-shrink-0"><i class="fa-solid fa-file-signature"></i></div>
-                                    <span class="font-bold text-gray-700">Mutuo Personal</span>
-                                </div>
-                                <div class="w-full md:w-2/5 flex flex-col md:items-center justify-start md:justify-center pl-[52px] md:pl-0 gap-2">
-                                    <button onclick="abrirModal('mutuo_personal')" class="text-primary hover:text-primaryHover bg-secondary/30 hover:bg-secondary/60 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 w-fit">
-                                        <i class="fa-solid fa-table-list"></i> Tabla Referencia
-                                    </button>
-                                </div>
-                                <div class="w-full md:w-1/5 flex justify-between md:justify-end items-center pl-[52px] md:pl-0 mt-1 md:mt-0">
-                                    <span class="text-xs text-gray-400 font-bold md:hidden uppercase tracking-wider">Monto:</span>
-                                    <div class="flex justify-end items-center gap-3">
-                                        <span id="txt-mutuo_personal" class="text-lg font-medium text-gray-700"></span>
-                                        <button id="btn-mutuo_personal" onclick="activarEdicion('mutuo_personal')" class="w-8 h-8 rounded-full bg-secondary/40 md:bg-transparent md:hover:bg-secondary/50 text-primary transition flex items-center justify-center shadow-sm md:shadow-none opacity-100 md:opacity-0 group-hover:opacity-100"><i class="fa-solid fa-pen text-xs"></i></button>
-                                        <input type="text" inputmode="decimal" id="desc-mutuo_personal" class="hidden w-28 text-right p-2 border-2 border-primary rounded-xl bg-white font-bold text-gray-700" oninput="formatRealTime(this); calcularTotalDescuentos()">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- 4. CANCELACIÓN HIPOTECA (SOLO HIPOTECARIA) -->
-                            <div class="flex flex-col md:flex-row items-start md:items-center p-4 md:p-5 gap-3 md:gap-0 hover:bg-grayLight/50 transition group row-hipotecaria">
-                                <div class="w-full md:w-2/5 flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-secondary/40 flex items-center justify-center text-primary flex-shrink-0"><i class="fa-solid fa-house-circle-xmark"></i></div>
-                                    <span class="font-bold text-gray-700">Cancelación de Hipoteca</span>
-                                </div>
-                                <div class="w-full md:w-2/5 flex flex-col md:items-center justify-start md:justify-center pl-[52px] md:pl-0 gap-2">
-                                    <button onclick="abrirModal('cancelacion_hipoteca')" class="text-primary hover:text-primaryHover bg-secondary/30 hover:bg-secondary/60 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 w-fit">
-                                        <i class="fa-solid fa-table-list"></i> Tabla Referencia
-                                    </button>
-                                    <label class="inline-flex items-center cursor-pointer w-fit">
-                                        <input type="checkbox" id="chk-cancelacion" onchange="recalcularDescuentos()" class="w-4 h-4 rounded text-primary focus:ring-primary">
-                                        <span class="ml-2 text-sm text-gray-500 font-bold">Aplicar</span>
-                                    </label>
-                                </div>
-                                <div class="w-full md:w-1/5 flex justify-between md:justify-end items-center pl-[52px] md:pl-0 mt-1 md:mt-0">
-                                    <span class="text-xs text-gray-400 font-bold md:hidden uppercase tracking-wider">Monto:</span>
-                                    <div class="flex justify-end items-center gap-3">
-                                        <span id="txt-cancelacion" class="text-lg font-medium text-gray-700"></span>
-                                        <button id="btn-cancelacion" onclick="activarEdicion('cancelacion')" class="w-8 h-8 rounded-full bg-secondary/40 md:bg-transparent md:hover:bg-secondary/50 text-primary transition flex items-center justify-center shadow-sm md:shadow-none opacity-100 md:opacity-0 group-hover:opacity-100"><i class="fa-solid fa-pen text-xs"></i></button>
-                                        <input type="text" inputmode="decimal" id="desc-cancelacion" class="hidden w-28 text-right p-2 border-2 border-primary rounded-xl bg-white font-bold text-gray-700" oninput="formatRealTime(this); calcularTotalDescuentos()">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- 5. DERECHO POR CANCELACIÓN DE HIPOTECA (SOLO HIPOTECARIA) -->
-                            <div class="flex flex-col md:flex-row items-start md:items-center p-4 md:p-5 gap-3 md:gap-0 hover:bg-grayLight/50 transition group row-hipotecaria">
-                                <div class="w-full md:w-2/5 flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-secondary/40 flex items-center justify-center text-primary flex-shrink-0"><i class="fa-solid fa-file-invoice"></i></div>
-                                    <span class="font-bold text-gray-700">Derecho por Cancelación de Hipoteca</span>
-                                </div>
-                                <div class="w-full md:w-2/5 flex items-center justify-start md:justify-center pl-[52px] md:pl-0">
-                                    <label class="inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" id="chk-derecho-canc" onchange="recalcularDescuentos()" class="w-4 h-4 rounded text-primary focus:ring-primary">
-                                        <span class="ml-2 text-xs text-gray-500 font-bold uppercase">Aplicar Cálculo</span>
-                                    </label>
-                                </div>
-                                <div class="w-full md:w-1/5 flex justify-between md:justify-end items-center pl-[52px] md:pl-0 mt-1 md:mt-0">
-                                    <span class="text-xs text-gray-400 font-bold md:hidden uppercase tracking-wider">Monto:</span>
-                                    <div class="flex justify-end items-center gap-3">
-                                        <span id="txt-derechocanc" class="text-lg font-medium text-gray-700"></span>
-                                        <button id="btn-derechocanc" onclick="activarEdicion('derechocanc')" class="w-8 h-8 rounded-full bg-secondary/40 md:bg-transparent md:hover:bg-secondary/50 text-primary transition flex items-center justify-center shadow-sm md:shadow-none opacity-100 md:opacity-0 group-hover:opacity-100"><i class="fa-solid fa-pen text-xs"></i></button>
-                                        <input type="text" inputmode="decimal" id="desc-derechocanc" class="hidden w-28 text-right p-2 border-2 border-primary rounded-xl bg-white font-bold text-gray-700" oninput="formatRealTime(this); calcularTotalDescuentos()">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- 6. GASTOS REGISTRALES (SOLO HIPOTECARIA) -->
-                            <div class="flex flex-col md:flex-row items-start md:items-center p-4 md:p-5 gap-3 md:gap-0 hover:bg-grayLight/50 transition group row-hipotecaria">
-                                <div class="w-full md:w-2/5 flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-secondary/40 flex items-center justify-center text-primary flex-shrink-0"><i class="fa-solid fa-stamp"></i></div>
-                                    <span class="font-bold text-gray-700">Gastos Registrales</span>
-                                </div>
-                                <div class="w-full md:w-2/5 flex items-center justify-start md:justify-center pl-[52px] md:pl-0">
-                                    <span class="text-xs text-gray-400 font-bold uppercase">$3.80 por c/ $1,000</span>
-                                </div>
-                                <div class="w-full md:w-1/5 flex justify-between md:justify-end items-center pl-[52px] md:pl-0 mt-1 md:mt-0">
-                                    <span class="text-xs text-gray-400 font-bold md:hidden uppercase tracking-wider">Monto:</span>
-                                    <div class="flex justify-end items-center gap-3">
-                                        <span id="txt-registrales" class="text-lg font-medium text-gray-700"></span>
-                                        <button id="btn-registrales" onclick="activarEdicion('registrales')" class="w-8 h-8 rounded-full bg-secondary/40 md:bg-transparent md:hover:bg-secondary/50 text-primary transition flex items-center justify-center shadow-sm md:shadow-none opacity-100 md:opacity-0 group-hover:opacity-100"><i class="fa-solid fa-pen text-xs"></i></button>
-                                        <input type="text" inputmode="decimal" id="desc-registrales" class="hidden w-28 text-right p-2 border-2 border-primary rounded-xl bg-white font-bold text-gray-700" oninput="formatRealTime(this); calcularTotalDescuentos()">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- 7. MUTUO HIPOTECARIO (SOLO HIPOTECARIA) -->
-                            <div class="flex flex-col md:flex-row items-start md:items-center p-4 md:p-5 gap-3 md:gap-0 hover:bg-grayLight/50 transition group row-hipotecaria">
-                                <div class="w-full md:w-2/5 flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-secondary/40 flex items-center justify-center text-primary flex-shrink-0"><i class="fa-solid fa-file-contract"></i></div>
-                                    <span class="font-bold text-gray-700">Mutuo Hipotecario</span>
-                                </div>
-                                <div class="w-full md:w-2/5 flex flex-col md:items-center justify-start md:justify-center pl-[52px] md:pl-0 gap-2">
-                                    <button onclick="abrirModal('mutuo_hipotecario')" class="text-primary hover:text-primaryHover bg-secondary/30 hover:bg-secondary/60 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 w-fit">
-                                        <i class="fa-solid fa-table-list"></i> Tabla Referencia
-                                    </button>
-                                </div>
-                                <div class="w-full md:w-1/5 flex justify-between md:justify-end items-center pl-[52px] md:pl-0 mt-1 md:mt-0">
-                                    <span class="text-xs text-gray-400 font-bold md:hidden uppercase tracking-wider">Monto:</span>
-                                    <div class="flex justify-end items-center gap-3">
-                                        <span id="txt-mutuo" class="text-lg font-medium text-gray-700"></span>
-                                        <button id="btn-mutuo" onclick="activarEdicion('mutuo')" class="w-8 h-8 rounded-full bg-secondary/40 md:bg-transparent md:hover:bg-secondary/50 text-primary transition flex items-center justify-center shadow-sm md:shadow-none opacity-100 md:opacity-0 group-hover:opacity-100"><i class="fa-solid fa-pen text-xs"></i></button>
-                                        <input type="text" inputmode="decimal" id="desc-mutuo" class="hidden w-28 text-right p-2 border-2 border-primary rounded-xl bg-white font-bold text-gray-700" oninput="formatRealTime(this); calcularTotalDescuentos()">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- 8. ANOTACION / CERTIFICACION (SOLO HIPOTECARIA) -->
-                            <div class="flex flex-col md:flex-row items-start md:items-center p-4 md:p-5 gap-3 md:gap-0 hover:bg-grayLight/50 transition group row-hipotecaria">
-                                <div class="w-full md:w-2/5 flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-secondary/40 flex items-center justify-center text-primary flex-shrink-0"><i class="fa-solid fa-thumbtack"></i></div>
-                                    <span class="font-bold text-gray-700 flex flex-col">
-                                        <span>Anotación Preventiva</span>
-                                        <span class="text-xs text-gray-500 font-normal">Y Certificación Extractada</span>
-                                    </span>
-                                </div>
-                                <div class="w-full md:w-2/5 flex items-center justify-start md:justify-center pl-[52px] md:pl-0">
-                                    <span class="text-xs text-gray-400 font-bold uppercase">Costo Fijo Base</span>
-                                </div>
-                                <div class="w-full md:w-1/5 flex justify-between md:justify-end items-center pl-[52px] md:pl-0 mt-1 md:mt-0">
-                                    <span class="text-xs text-gray-400 font-bold md:hidden uppercase tracking-wider">Monto:</span>
-                                    <div class="flex justify-end items-center gap-3">
-                                        <span id="txt-fijos-hipo" class="text-lg font-medium text-gray-700"></span>
-                                        <button id="btn-fijos-hipo" onclick="activarEdicion('fijos-hipo')" class="w-8 h-8 rounded-full bg-secondary/40 md:bg-transparent md:hover:bg-secondary/50 text-primary transition flex items-center justify-center shadow-sm md:shadow-none opacity-100 md:opacity-0 group-hover:opacity-100"><i class="fa-solid fa-pen text-xs"></i></button>
-                                        <input type="text" inputmode="decimal" id="desc-fijos-hipo" class="hidden w-28 text-right p-2 border-2 border-primary rounded-xl bg-white font-bold text-gray-700" oninput="formatRealTime(this); calcularTotalDescuentos()">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- 9. VALÚO (SOLO HIPOTECARIA) -->
-                            <div class="flex flex-col md:flex-row items-start md:items-center p-4 md:p-5 gap-3 md:gap-0 hover:bg-grayLight/50 transition group row-hipotecaria">
-                                <div class="w-full md:w-2/5 flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-secondary/40 flex items-center justify-center text-primary flex-shrink-0"><i class="fa-solid fa-calculator"></i></div>
-                                    <span class="font-bold text-gray-700">Valúo (Cancela al Evaluador)</span>
-                                </div>
-                                <div class="w-full md:w-2/5 flex items-center justify-start md:justify-center pl-[52px] md:pl-0">
-                                    <label class="inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" id="chk-valuo" onchange="recalcularDescuentos()" class="w-4 h-4 rounded text-primary focus:ring-primary">
-                                        <span class="ml-2 text-xs text-gray-500 font-bold uppercase">Incluir Estimado</span>
-                                    </label>
-                                </div>
-                                <div class="w-full md:w-1/5 flex justify-between md:justify-end items-center pl-[52px] md:pl-0 mt-1 md:mt-0">
-                                    <span class="text-xs text-gray-400 font-bold md:hidden uppercase tracking-wider">Monto:</span>
-                                    <div class="flex justify-end items-center gap-3">
-                                        <span id="txt-valuo" class="text-lg font-medium text-gray-700"></span>
-                                        <button id="btn-valuo" onclick="activarEdicion('valuo')" class="w-8 h-8 rounded-full bg-secondary/40 md:bg-transparent md:hover:bg-secondary/50 text-primary transition flex items-center justify-center shadow-sm md:shadow-none opacity-100 md:opacity-0 group-hover:opacity-100"><i class="fa-solid fa-pen text-xs"></i></button>
-                                        <input type="text" inputmode="decimal" id="desc-valuo" class="hidden w-28 text-right p-2 border-2 border-primary rounded-xl bg-white font-bold text-gray-700" oninput="formatRealTime(this); calcularTotalDescuentos()">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- 10. ACCIONES (AMBOS - SIN IVA) -->
-                            <div class="flex flex-col md:flex-row items-start md:items-center p-4 md:p-5 gap-3 md:gap-0 hover:bg-grayLight/50 transition group row-ambos">
-                                <div class="w-full md:w-2/5 flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-secondary/40 flex items-center justify-center text-primary flex-shrink-0"><i class="fa-solid fa-chart-pie"></i></div>
-                                    <span class="font-bold text-gray-700">Acciones</span>
-                                </div>
-                                <div class="w-full md:w-2/5 flex flex-col md:items-center justify-start md:justify-center pl-[52px] md:pl-0 gap-2">
-                                    <button onclick="abrirModal('acciones')" class="text-primary hover:text-primaryHover bg-secondary/30 hover:bg-secondary/60 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 w-fit">
-                                        <i class="fa-solid fa-table-list"></i> Ver Tabla
-                                    </button>
-                                </div>
-                                <div class="w-full md:w-1/5 flex justify-between md:justify-end items-center pl-[52px] md:pl-0 mt-1 md:mt-0">
-                                    <span class="text-xs text-gray-400 font-bold md:hidden uppercase tracking-wider">Monto:</span>
-                                    <div class="flex justify-end items-center gap-3">
-                                        <span id="txt-acciones" class="text-lg font-medium text-gray-700"></span>
-                                        <button id="btn-acciones" onclick="activarEdicion('acciones')" class="w-8 h-8 rounded-full bg-secondary/40 md:bg-transparent md:hover:bg-secondary/50 text-primary transition flex items-center justify-center shadow-sm md:shadow-none opacity-100 md:opacity-0 group-hover:opacity-100"><i class="fa-solid fa-pen text-xs"></i></button>
-                                        <input type="text" inputmode="decimal" id="desc-acciones" class="hidden w-28 text-right p-2 border-2 border-primary rounded-xl bg-white font-bold text-gray-700" oninput="formatRealTime(this); calcularTotalDescuentos()">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- 11. 1RA CUOTA (AMBOS) -->
-                            <div class="flex flex-col md:flex-row items-start md:items-center p-4 md:p-5 gap-3 md:gap-0 hover:bg-grayLight/50 transition group row-ambos">
-                                <div class="w-full md:w-2/5 flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-secondary/40 flex items-center justify-center text-primary flex-shrink-0"><i class="fa-solid fa-calendar-check"></i></div>
-                                    <span class="font-bold text-gray-700">Descuento Primera Cuota</span>
-                                </div>
-                                <div class="w-full md:w-2/5 flex items-center justify-start md:justify-center pl-[52px] md:pl-0">
-                                    <label class="inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" id="chk-primera-cuota" onchange="recalcularDescuentos()" class="w-4 h-4 rounded text-primary focus:ring-primary">
-                                        <span class="ml-2 text-xs text-gray-500 font-bold uppercase">Aplicar (Restr. Aplican)</span>
-                                    </label>
-                                </div>
-                                <div class="w-full md:w-1/5 flex justify-between md:justify-end items-center pl-[52px] md:pl-0 mt-1 md:mt-0">
-                                    <span class="text-xs text-gray-400 font-bold md:hidden uppercase tracking-wider">Monto:</span>
-                                    <div class="flex justify-end items-center gap-3">
-                                        <span id="txt-primera-cuota" class="text-lg font-medium text-gray-700"></span>
-                                        <button id="btn-primera-cuota" onclick="activarEdicion('primera-cuota')" class="w-8 h-8 rounded-full bg-secondary/40 md:bg-transparent md:hover:bg-secondary/50 text-primary transition flex items-center justify-center shadow-sm md:shadow-none opacity-100 md:opacity-0 group-hover:opacity-100"><i class="fa-solid fa-pen text-xs"></i></button>
-                                        <input type="text" inputmode="decimal" id="desc-primera-cuota" class="hidden w-28 text-right p-2 border-2 border-primary rounded-xl bg-white font-bold text-gray-700" oninput="formatRealTime(this); calcularTotalDescuentos()">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- 12. ADICIONALES (AMBOS) -->
-                            <div class="flex flex-col md:flex-row items-start md:items-center p-4 md:p-5 gap-3 md:gap-0 hover:bg-grayLight/50 transition group row-ambos border-b-0">
-                                <div class="w-full md:w-2/5 flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-secondary/40 flex items-center justify-center text-primary flex-shrink-0"><i class="fa-solid fa-plus-minus"></i></div>
-                                    <span class="font-bold text-gray-700">Deducciones Adicionales</span>
-                                </div>
-                                <div class="w-full md:w-2/5 flex items-center justify-start md:justify-center pl-[52px] md:pl-0">
-                                    <span class="text-xs text-gray-400 font-bold uppercase">Personalizado</span>
-                                </div>
-                                <div class="w-full md:w-1/5 flex justify-between md:justify-end items-center pl-[52px] md:pl-0 mt-1 md:mt-0">
-                                    <span class="text-xs text-gray-400 font-bold md:hidden uppercase tracking-wider">Monto:</span>
-                                    <div class="flex justify-end items-center gap-3">
-                                        <span id="txt-adicionales" class="text-lg font-medium text-gray-700"></span>
-                                        <button id="btn-adicionales" onclick="activarEdicion('adicionales')" class="w-8 h-8 rounded-full bg-secondary/40 md:bg-transparent md:hover:bg-secondary/50 text-primary transition flex items-center justify-center shadow-sm md:shadow-none opacity-100 md:opacity-0 group-hover:opacity-100"><i class="fa-solid fa-pen text-xs"></i></button>
-                                        <input type="text" inputmode="decimal" id="desc-adicionales" class="hidden w-28 text-right p-2 border-2 border-primary rounded-xl bg-white font-bold text-gray-700" oninput="formatRealTime(this); calcularTotalDescuentos()">
-                                    </div>
-                                </div>
-                            </div>
-
-                        </div>
-
-                        <!-- TOTAL -->
-                        <div class="bg-primary flex flex-col">
-                            <div class="p-6 md:p-8 flex flex-col md:flex-row justify-between items-center text-white gap-2 md:gap-0 border-b border-white/20">
-                                <span class="text-sm md:text-lg uppercase tracking-widest font-black opacity-90">Total Deducciones:</span>
-                                <span id="desc-total-sum" class="text-4xl md:text-5xl font-black drop-shadow-md">$0.00</span>
-                            </div>
-                            <div class="p-6 md:p-8 flex flex-col md:flex-row justify-between items-center text-white gap-2 md:gap-0 bg-black/10">
-                                <span class="text-sm md:text-lg uppercase tracking-widest font-black opacity-90 text-secondary">Total a Desembolsar:</span>
-                                <span id="desc-desembolso" class="text-3xl md:text-4xl font-black text-secondary drop-shadow-md">$0.00</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- SECCIÓN 3: DOCS HIPOTECARIOS -->
-            <section id="tab-doc-hipo" class="tab-content hidden max-w-4xl mx-auto">
-                <div class="bg-white p-5 md:p-12 rounded-[2rem] md:rounded-[2.5rem] shadow-xl shadow-black/5 border border-secondary/20">
-                    <h2 class="text-3xl font-extrabold text-primary mb-10 tracking-tight">Doc. Hipotecarios</h2>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="p-6 border-2 border-secondary/40 rounded-3xl hover:border-primary/50 hover:shadow-lg transition bg-grayLight group">
-                            <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm mb-4 group-hover:bg-primary group-hover:text-white transition text-primary"><i class="fa-solid fa-file-contract text-xl"></i></div>
-                            <h4 class="font-bold text-dark text-lg mb-2">Copia de Escritura</h4>
-                            <p class="text-sm text-gray-500 font-medium">Copia legible del inmueble a hipotecar.</p>
-                        </div>
-                        <div class="p-6 border-2 border-secondary/40 rounded-3xl hover:border-primary/50 hover:shadow-lg transition bg-grayLight group">
-                            <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm mb-4 group-hover:bg-primary group-hover:text-white transition text-primary"><i class="fa-solid fa-calculator text-xl"></i></div>
-                            <h4 class="font-bold text-dark text-lg mb-2">Valúo</h4>
-                            <p class="text-sm text-gray-500 font-medium">El cliente cancela directamente al valuador.</p>
-                        </div>
-                        <div class="p-6 border-2 border-secondary/40 rounded-3xl hover:border-primary/50 hover:shadow-lg transition bg-grayLight group">
-                            <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm mb-4 group-hover:bg-primary group-hover:text-white transition text-primary"><i class="fa-solid fa-certificate text-xl"></i></div>
-                            <h4 class="font-bold text-dark text-lg mb-2">Certificación Extractada</h4>
-                            <p class="text-sm text-gray-500 font-medium">El cliente cancela su emisión.</p>
-                        </div>
-                        <div class="p-6 border-2 border-secondary/40 rounded-3xl hover:border-primary/50 hover:shadow-lg transition bg-grayLight group">
-                            <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm mb-4 group-hover:bg-primary group-hover:text-white transition text-primary"><i class="fa-solid fa-building-columns text-xl"></i></div>
-                            <h4 class="font-bold text-dark text-lg mb-2">Solvencia Municipal</h4>
-                            <p class="text-sm text-gray-500 font-medium">Solicitar en la alcaldía correspondiente.</p>
-                        </div>
-                        <div class="p-6 border-2 border-secondary/40 rounded-3xl hover:border-primary/50 hover:shadow-lg transition bg-grayLight group">
-                            <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm mb-4 group-hover:bg-primary group-hover:text-white transition text-primary"><i class="fa-solid fa-scale-balanced text-xl"></i></div>
-                            <h4 class="font-bold text-dark text-lg mb-2">Estudio Jurídico</h4>
-                            <p class="text-sm text-gray-500 font-medium">Solicitar a la abogada asignada.</p>
-                        </div>
-                        <div class="p-6 border-2 border-secondary/40 rounded-3xl hover:border-primary/50 hover:shadow-lg transition bg-grayLight group">
-                            <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm mb-4 group-hover:bg-primary group-hover:text-white transition text-primary"><i class="fa-solid fa-stamp text-xl"></i></div>
-                            <h4 class="font-bold text-dark text-lg mb-2">Anotación Preventiva</h4>
-                            <p class="text-sm text-gray-500 font-medium">Aplica únicamente si el crédito se aprueba.</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- SECCIÓN 4: DOCS PERSONALES Y FIADORES -->
-            <section id="tab-doc-personas" class="tab-content hidden max-w-5xl mx-auto">
-                <div class="bg-white p-5 md:p-12 rounded-[2rem] md:rounded-[2.5rem] shadow-xl shadow-black/5 border border-secondary/20">
-                    <h2 class="text-3xl font-extrabold text-primary mb-10 tracking-tight">Documentos Personales y Fiadores</h2>
-                    
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                        <div class="bg-grayLight p-8 rounded-[2rem] border-2 border-secondary/40">
-                            <div class="mb-6 flex items-center gap-4">
-                                <div class="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white"><i class="fa-solid fa-user text-xl"></i></div>
-                                <h3 class="text-2xl font-bold text-dark">Solicitante</h3>
-                            </div>
-                            <ul class="space-y-4 text-gray-700 font-medium list-disc pl-5 marker:text-primary">
-                                <li>DUI reverso y derecho.</li>
-                                <li>Recibo de agua o luz.</li>
-                                <li>Correo electrónico activo.</li>
-                                <li>Constancia de ingresos.</li>
-                                <li><span class="font-bold text-primary">¿Destino del Financiamiento?</span></li>
-                                <li><strong>2 referencias personales y 2 familiares</strong> que no vivan con usted (Nombre completo, Dirección, Teléfono).</li>
-                                <li>Firmar hoja de autorización de consulta de Buró.</li>
-                            </ul>
-                        </div>
-
-                        <div class="bg-grayLight p-8 rounded-[2rem] border-2 border-secondary/40">
-                            <div class="mb-6 flex items-center gap-4">
-                                <div class="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white"><i class="fa-solid fa-user-shield text-xl"></i></div>
-                                <h3 class="text-2xl font-bold text-dark">Fiadores</h3>
-                            </div>
-                            <ul class="space-y-4 text-gray-700 font-medium list-disc pl-5 marker:text-primary">
-                                <li>DUI reverso y derecho.</li>
-                                <li>Recibo de agua o luz.</li>
-                                <li><span class="font-bold text-primary">Constancia de ingresos (Mínimo $816).</span></li>
-                                <li><strong>2 referencias personales y 2 familiares</strong> que no vivan con usted (Nombre completo, Dirección, Teléfono).</li>
-                                <li>Firmar hoja de autorización de consulta de Buró.</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- SECCIÓN 5: EXTRAS (FECHAS) -->
-            <section id="tab-extras" class="tab-content hidden max-w-5xl mx-auto">
-                <div class="bg-white p-5 md:p-12 rounded-[2rem] md:rounded-[2.5rem] shadow-xl shadow-black/5 border border-secondary/20">
-                    <h2 class="text-3xl font-extrabold text-primary mb-10 tracking-tight">Extras (Herramientas de Fechas)</h2>
-                    
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        
-                        <!-- 1. CALCULAR FECHA FUTURA -->
-                        <div class="bg-grayLight p-6 rounded-[2rem] border-2 border-secondary/40 transition hover:shadow-lg hover:border-primary/50">
-                            <h3 class="text-xl font-bold text-dark mb-4 flex items-center gap-3"><i class="fa-solid fa-calendar-plus text-primary"></i> Calcular Fecha Futura</h3>
-                            <div class="grid grid-cols-4 gap-3 mb-5">
-                                <div>
-                                    <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Días</label>
-                                    <input type="number" id="ext-days" value="" placeholder="0" min="0" oninput="calcFutureDate()" class="w-full p-2.5 rounded-xl text-center border-2 border-transparent focus:border-primary focus:outline-none bg-white font-bold text-dark">
-                                </div>
-                                <div>
-                                    <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Semanas</label>
-                                    <input type="number" id="ext-weeks" value="" placeholder="0" min="0" oninput="calcFutureDate()" class="w-full p-2.5 rounded-xl text-center border-2 border-transparent focus:border-primary focus:outline-none bg-white font-bold text-dark">
-                                </div>
-                                <div>
-                                    <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Meses</label>
-                                    <input type="number" id="ext-months" value="" placeholder="0" min="0" oninput="calcFutureDate()" class="w-full p-2.5 rounded-xl text-center border-2 border-transparent focus:border-primary focus:outline-none bg-white font-bold text-dark">
-                                </div>
-                                <div>
-                                    <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Años</label>
-                                    <input type="number" id="ext-years" value="" placeholder="0" min="0" oninput="calcFutureDate()" class="w-full p-2.5 rounded-xl text-center border-2 border-transparent focus:border-primary focus:outline-none bg-white font-bold text-dark">
-                                </div>
-                            </div>
-                            <div class="bg-white p-4 rounded-xl border border-secondary/50 text-center">
-                                <span class="block text-xs uppercase text-gray-400 font-bold mb-1">Resultado (Calculado desde HOY)</span>
-                                <span id="res-future-date" class="text-lg font-bold text-primary capitalize drop-shadow-sm"></span>
-                            </div>
-                        </div>
-
-                        <!-- 2. TIEMPO TRANSCURRIDO -->
-                        <div class="bg-grayLight p-6 rounded-[2rem] border-2 border-secondary/40 transition hover:shadow-lg hover:border-primary/50">
-                            <h3 class="text-xl font-bold text-dark mb-4 flex items-center gap-3"><i class="fa-solid fa-clock-rotate-left text-primary"></i> Días Han Pasado</h3>
-                            <div class="mb-5">
-                                <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Desde cuándo (Fecha Pasada)</label>
-                                <input type="date" id="ext-past-date" value="" onchange="calcElapsedTime()" class="w-full p-3 rounded-xl border-2 border-transparent focus:border-primary focus:outline-none bg-white font-bold text-dark uppercase cursor-pointer">
-                            </div>
-                            <div class="bg-white p-4 rounded-xl border border-secondary/50 text-center flex flex-col justify-center min-h-[76px]">
-                                <span class="block text-xs uppercase text-gray-400 font-bold mb-1">Han pasado exactamente:</span>
-                                <span id="res-elapsed" class="text-lg font-bold text-primary"></span>
-                            </div>
-                        </div>
-
-                        <!-- 3. DÍAS FALTANTES -->
-                        <div class="bg-grayLight p-6 rounded-[2rem] border-2 border-secondary/40 transition hover:shadow-lg hover:border-primary/50">
-                            <h3 class="text-xl font-bold text-dark mb-4 flex items-center gap-3"><i class="fa-solid fa-hourglass-half text-primary"></i> Días Faltantes</h3>
-                            <div class="mb-5">
-                                <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Hasta cuándo (Fecha Futura)</label>
-                                <input type="date" id="ext-future-date" value="" onchange="calcDaysRemaining()" class="w-full p-3 rounded-xl border-2 border-transparent focus:border-primary focus:outline-none bg-white font-bold text-dark uppercase cursor-pointer">
-                            </div>
-                            <div class="bg-white p-4 rounded-xl border border-secondary/50 flex justify-between items-center">
-                                <span class="text-sm uppercase text-gray-400 font-bold">Faltan:</span>
-                                <div class="text-right flex items-baseline">
-                                    <span id="res-remaining" class="text-3xl font-black text-primary drop-shadow-sm"></span>
-                                    <span class="text-gray-500 font-bold ml-1">días</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 4. EDAD -->
-                        <div class="bg-grayLight p-6 rounded-[2rem] border-2 border-secondary/40 transition hover:shadow-lg hover:border-primary/50">
-                            <h3 class="text-xl font-bold text-dark mb-4 flex items-center gap-3"><i class="fa-solid fa-cake-candles text-primary"></i> Calcular Edad</h3>
-                            <div class="mb-5">
-                                <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Fecha de Nacimiento</label>
-                                <input type="date" id="ext-birth-date" value="" onchange="calcAge()" class="w-full p-3 rounded-xl border-2 border-transparent focus:border-primary focus:outline-none bg-white font-bold text-dark uppercase cursor-pointer">
-                            </div>
-                            <div class="bg-white p-4 rounded-xl border border-secondary/50 flex justify-between items-center">
-                                <span class="text-sm uppercase text-gray-400 font-bold">Edad Actual:</span>
-                                <div class="text-right flex items-baseline">
-                                    <span id="res-age" class="text-3xl font-black text-primary drop-shadow-sm"></span>
-                                    <span class="text-gray-500 font-bold ml-1">años</span>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            </section>
+            <select id="mainMonthFilter" class="month-filter-select" onchange="renderItems()">
+                <option value="">🗓️ Mes: Todos</option>
+                <option value="01">Enero</option>
+                <option value="02">Febrero</option>
+                <option value="03">Marzo</option>
+                <option value="04">Abril</option>
+                <option value="05">Mayo</option>
+                <option value="06">Junio</option>
+                <option value="07">Julio</option>
+                <option value="08">Agosto</option>
+                <option value="09">Septiembre</option>
+                <option value="10">Octubre</option>
+                <option value="11">Noviembre</option>
+                <option value="12">Diciembre</option>
+            </select>
         </div>
+        
+        <div id="itemsContainer"></div>
     </main>
 
-    <!-- MODAL PARA TABLAS INTERACTIVAS -->
-    <div id="modal-tablas" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-dark/70 backdrop-blur-sm" onclick="cerrarModal()"></div>
-        <div class="bg-white rounded-[2rem] shadow-2xl relative z-10 w-full max-w-4xl flex flex-col max-h-[90vh] border-4 border-grayLight">
-            <div class="p-6 border-b border-secondary/50 flex justify-between items-center bg-grayLight rounded-t-[1.8rem]">
-                <h3 id="modal-titulo" class="text-2xl font-extrabold text-primary flex items-center gap-3">
-                    <i class="fa-solid fa-table-list"></i> Tabla de Referencia
-                </h3>
-                <button onclick="cerrarModal()" class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 hover:shadow-md transition text-xl"><i class="fa-solid fa-xmark"></i></button>
+    <!-- Modal Calendario -->
+    <div id="calendarModal" onclick="closeCalendar(event)">
+        <div class="cal-content" onclick="event.stopPropagation()">
+            <div class="cal-header">
+                <button class="icon-btn" onclick="changeMonth(-1)">❮</button>
+                <input type="month" id="monthPicker" class="month-picker" onchange="jumpToMonth(this.value)">
+                <button class="icon-btn" onclick="changeMonth(1)">❯</button>
             </div>
-            <div class="p-0 overflow-y-auto bg-white rounded-b-[1.8rem]">
-                <p class="px-6 py-4 text-sm text-gray-500 font-medium bg-secondary/10 border-b border-secondary/30">
-                    <i class="fa-solid fa-circle-info text-primary mr-1"></i> Puedes hacer clic sobre cualquier fila para elegirla manualmente y cerrar el cuadro.
-                </p>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left min-w-[500px]" id="modal-tabla-contenido">
-                        <!-- Contenido dinámico -->
-                    </table>
-                </div>
-            </div>
+            <div class="cal-grid" id="calGrid"></div>
+            
+            <div id="dayDetailsPanel" class="day-details"></div>
+
+            <button class="btn" style="width:100%; margin-top:1.5rem; background:#f1f5f9; color:var(--text-main); border:none; padding:0.8rem; border-radius:10px; font-weight:600; cursor:pointer;" onclick="closeCalendar(true)">Cerrar Calendario</button>
         </div>
     </div>
 
-    <!-- SCRIPT -->
+    <!-- Toast -->
+    <div id="toast">Acción completada</div>
+
     <script>
-        // --- 1. UTILIDADES Y FORMATO EN TIEMPO REAL ---
-        function formatNumber(num) {
-            return parseFloat(num).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        }
-        function parseNumber(str) {
-            if(!str) return 0;
-            return parseFloat(str.toString().replace(/,/g, '')) || 0;
-        }
+        const statesConfig = [
+            { id: 's_1', name: 'TRABAJANDO' },
+            { id: 's_2', name: 'PENDIENTES' },
+            { id: 's_3', name: 'DESEMBOLSADO' },
+            { id: 's_4', name: 'DENEGADO' },
+            { id: 's_5', name: 'BÓVEDA' }
+        ];
 
-        function formatRealTime(inputElement) {
-            let cursor = inputElement.selectionStart;
-            let oldLength = inputElement.value.length;
-            
-            let value = inputElement.value.replace(/[^0-9.]/g, '');
-            const parts = value.split('.');
-            if (parts.length > 2) {
-                parts.pop();
-                value = parts.join('.');
-            }
-            if (parts[1] && parts[1].length > 2) {
-                parts[1] = parts[1].substring(0, 2);
-                value = parts.join('.');
-            }
-            
-            if (parts[0]) {
-                parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-            }
-            
-            let formatted = parts.join('.');
-            inputElement.value = formatted;
-            
-            let newLength = formatted.length;
-            cursor += (newLength - oldLength);
-            if (cursor < 0) cursor = 0;
-            inputElement.setSelectionRange(cursor, cursor);
-        }
-
-        // --- 2. NAVEGACIÓN Y VISTAS ---
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active-tab', 'text-primary', 'bg-secondary/30');
-            });
-
-            document.getElementById('tab-' + tabId).classList.remove('hidden');
-            const activeBtn = document.getElementById('btn-' + tabId);
-            activeBtn.classList.add('active-tab', 'text-primary');
-
-            const currentTitle = activeBtn.querySelector('span').innerText;
-            document.getElementById('mobile-title').innerText = currentTitle;
-
-            // Mantener sincronizada la cabecera del modo impresión (Ctrl+P).
-            const printTitle = document.getElementById('print-header-title');
-            const printDate = document.getElementById('print-header-date');
-            if (printTitle) printTitle.innerText = currentTitle;
-            if (printDate) {
-                printDate.innerText = new Date().toLocaleDateString('es-SV', {
-                    day: '2-digit', month: '2-digit', year: 'numeric'
-                });
-            }
-
-            if (tabId === 'descuentos') recalcularDescuentos();
-            
-            // Cierra el panel lateral al seleccionar una opción en cualquier tamaño de pantalla
-            const sidebar = document.getElementById('sidebar');
-            if (!sidebar.classList.contains('-translate-x-full')) {
-                toggleSidebar();
-            }
-        }
-
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
-            if (sidebar.classList.contains('-translate-x-full')) {
-                sidebar.classList.remove('-translate-x-full');
-                overlay.classList.remove('hidden');
-            } else {
-                sidebar.classList.add('-translate-x-full');
-                overlay.classList.add('hidden');
-            }
-        }
-
-        // --- 3. LOGICA OPCIONES HIPOTECARIAS ---
-        function toggleOpcionesHipotecarias() {
-            const panel = document.getElementById('opciones-hipotecarias');
-            const icon = document.getElementById('icon-toggle-hipo');
-            if(panel.classList.contains('hidden')) {
-                panel.classList.remove('hidden');
-                icon.classList.add('rotate-180');
-            } else {
-                panel.classList.add('hidden');
-                icon.classList.remove('rotate-180');
-                
-                // Limpiar datos al ocultar para que no afecten cálculos
-                document.getElementById('chk-seguro-residencia').checked = false;
-                document.getElementById('valor-construccion').value = '';
-                document.getElementById('monto-cancelacion-base').value = '';
-                
-                calcularCuota();
-                recalcularDescuentos();
-            }
-        }
-
-        function cambiarTipoDeduccion(tipo) {
-            tipoDeduccionActual = tipo;
-            
-            document.getElementById('btn-tipo-hipotecaria').className = `flex-1 py-3 text-sm font-bold rounded-xl transition-all ${tipo === 'hipotecaria' ? 'toggle-btn-active' : 'text-gray-400 hover:text-primary'}`;
-            document.getElementById('btn-tipo-personal').className = `flex-1 py-3 text-sm font-bold rounded-xl transition-all ${tipo === 'personal' ? 'toggle-btn-active' : 'text-gray-400 hover:text-primary'}`;
-            
-            document.querySelectorAll('.row-ambos').forEach(el => el.classList.remove('hidden'));
-            document.querySelectorAll('.row-hipotecaria').forEach(el => {
-                tipo === 'hipotecaria' ? el.classList.remove('hidden') : el.classList.add('hidden');
-            });
-            document.querySelectorAll('.row-personal').forEach(el => {
-                tipo === 'personal' ? el.classList.remove('hidden') : el.classList.add('hidden');
-            });
-
-            recalcularDescuentos();
-        }
-
-        let tipoDeduccionActual = 'hipotecaria';
-
-        // --- 4. CÁLCULO DE CUOTA ---
-        function obtenerMesesDesdePlazo(plazoVal) {
-            const valStr = plazoVal.toString().trim();
-            if (!valStr.includes('.')) return (parseFloat(valStr) || 0) * 12;
-            const partes = valStr.split('.');
-            const anios = parseInt(partes[0], 10) || 0;
-            const meses = parseInt(partes[1], 10) || 0;
-            return (anios * 12) + meses;
-        }
-
-        function calcularCuota() {
-            const monto = parseNumber(document.getElementById('monto').value);
-            const plazoInput = parseFloat(document.getElementById('plazo').value) || 0;
-            const interesAnual = parseNumber(document.getElementById('interes').value);
-
-            const meses = obtenerMesesDesdePlazo(plazoInput);
-            document.getElementById('meses-info').innerText = `${meses} meses en total`;
-
-            let cuotaBase = 0;
-            let seguro = 0;
-            let seguroResidencia = 0;
-            let totalCuota = 0;
-
-            // Logica Seguro de Residencia
-            const applySeguroRes = document.getElementById('chk-seguro-residencia')?.checked || false;
-            const boxSeguroRes = document.getElementById('box-seguro-residencia');
-            const rowSeguroResResult = document.getElementById('row-res-seguro-residencia');
-
-            if(applySeguroRes) {
-                if(boxSeguroRes) boxSeguroRes.classList.remove('hidden');
-                if(rowSeguroResResult) rowSeguroResResult.classList.remove('hidden');
-                
-                const valorConst = parseNumber(document.getElementById('valor-construccion').value);
-                
-                // Formula: =(MONTO*4.25) / 1000 / 12
-                seguroResidencia = (valorConst * 4.25) / 1000 / 12;
-            } else {
-                if(boxSeguroRes) boxSeguroRes.classList.add('hidden');
-                if(rowSeguroResResult) rowSeguroResResult.classList.add('hidden');
-            }
-
-            if (monto > 0 && meses > 0 && interesAnual > 0) {
-                const i = (interesAnual / 100) / 12; 
-                cuotaBase = monto * (i * Math.pow(1 + i, meses)) / (Math.pow(1 + i, meses) - 1);
-                seguro = monto * 0.001; 
-            }
-            
-            totalCuota = cuotaBase + seguro + seguroResidencia;
-
-            document.getElementById('res-cuota-base').innerText = `$${formatNumber(cuotaBase)}`;
-            document.getElementById('res-seguro').innerText = `$${formatNumber(seguro)}`;
-            
-            if(document.getElementById('res-seguro-residencia')) {
-                document.getElementById('res-seguro-residencia').innerText = `$${formatNumber(seguroResidencia)}`;
-            }
-            
-            document.getElementById('res-total-cuota').innerText = `$${formatNumber(totalCuota)}`;
-            return { monto, totalCuota };
-        }
-
-        // --- 5. LÓGICA DE TABLAS REFERENCIALES (MODALES) ---
-        const tablasReferencia = {
-            'mutuo_personal': {
-                titulo: "Mutuos Personales", targetId: 'mutuo_personal', heads: ["Rango de Montos ($)", "Costo Base ($)", "IVA ($)", "Total ($)"],
-                datos: [ 
-                    ["0.00 - 999.00", 25.00, 3.25, 28.25], 
-                    ["1,000.00 - 2,000.00", 30.00, 3.90, 33.90], 
-                    ["2,001.00 - 3,000.00", 35.00, 4.55, 39.55], 
-                    ["3,001.00 - 4,000.00", 40.00, 5.20, 45.20], 
-                    ["4,001.00 - 5,000.00", 45.00, 5.85, 50.85], 
-                    ["5,001.00 - 6,000.00", 50.00, 6.50, 56.50], 
-                    ["6,001.00 - 7,000.00", 55.00, 7.15, 62.15], 
-                    ["7,001.00 - 8,000.00", 60.00, 7.80, 67.80], 
-                    ["8,001.00 - 9,000.00", 65.00, 8.45, 73.45], 
-                    ["9,001.00 - 10,000.00", 70.00, 9.10, 79.10], 
-                    ["10,001.00 - 11,000.00", 75.00, 9.75, 84.75], 
-                    ["11,001.00 - 12,000.00", 80.00, 10.40, 90.40], 
-                    ["12,001.00 - 13,000.00", 85.00, 11.05, 96.05], 
-                    ["13,001.00 - 14,000.00", 90.00, 11.70, 101.70], 
-                    ["14,001.00 - 15,000.00", 95.00, 12.35, 107.35], 
-                    ["15,001.00 - 16,000.00", 100.00, 13.00, 113.00], 
-                    ["16,001.00 - 17,000.00", 105.00, 13.65, 118.65], 
-                    ["17,001.00 - 18,000.00", 110.00, 14.30, 124.30], 
-                    ["18,001.00 - 19,000.00", 115.00, 14.95, 129.95], 
-                    ["19,001.00 - 20,000.00", 120.00, 15.60, 135.60], 
-                    ["20,001.00 en adelante", 125.00, 16.25, 141.25] 
-                ]
-            },
-            'mutuo_hipotecario': {
-                titulo: "Mutuo Hipotecario", targetId: 'mutuo', heads: ["Rango de Montos ($)", "Costo Base ($)", "IVA ($)", "Total ($)"],
-                datos: [ ["1,000.00 - 10,000.00", 75.00, 9.75, 84.75], ["10,001.00 - 20,000.00", 100.00, 13.00, 113.00], ["20,001.00 - 30,000.00", 125.00, 16.25, 141.25], ["30,001.00 - 40,000.00", 150.00, 19.50, 169.50], ["40,001.00 - 50,000.00", 175.00, 22.75, 197.75], ["50,000.00 en adelante", 200.00, 26.00, 226.00] ]
-            },
-            'cancelacion_hipoteca': {
-                titulo: "Cancelación de Hipotecas", targetId: 'cancelacion', heads: ["Rango de Montos ($)", "Costo Base ($)", "IVA ($)", "Total ($)"],
-                datos: [ ["1,000.00 - 10,000.00", 40.00, 5.20, 45.20], ["10,001.00 - 20,000.00", 50.00, 6.50, 56.50], ["20,001.00 - 30,000.00", 60.00, 7.80, 67.80], ["30,001.00 - 40,000.00", 70.00, 9.10, 79.10], ["40,001.00 - 50,000.00", 80.00, 10.40, 90.40], ["50,000.00 en adelante", 90.00, 11.70, 101.70] ]
-            },
-            'estudio': {
-                titulo: "Derecho por Estudio Crediticio", targetId: 'estudio', heads: ["Rango de Montos ($)", "Porcentaje", "IVA"],
-                datos: [ ["1,000.00 - 10,000.00", "1%", "13%"], ["10,001.00 - 50,000.00", "0.75%", "13%"], ["50,000.00 en adelante", "0.50%", "13%"] ]
-            },
-            'acciones': {
-                titulo: "Descuento por Acciones", targetId: 'acciones', heads: ["Rango de Montos ($)", "Porcentaje"],
-                datos: [ ["1,000.00 - 10,000.00", "1.50%"], ["10,001.00 - 50,000.00", "1%"], ["50,001.00 en adelante", "0.75%"] ]
-            }
+        let appData = JSON.parse(localStorage.getItem('proyectoWebV10')) || {
+            currentStateView: 's_1',
+            items: []
         };
 
-        function abrirModal(tipo) {
-            const data = tablasReferencia[tipo];
-            if(!data) return;
-            document.getElementById('modal-titulo').innerHTML = `<i class="fa-solid fa-table-list"></i> ${data.titulo}`;
-            let thead = data.heads.map(h => `<th class="p-4 font-bold uppercase tracking-wide text-xs text-gray-500 whitespace-nowrap">${h}</th>`).join('');
-            let tbody = data.datos.map(fila => {
-                const valorFinal = fila[fila.length - 1]; 
-                const valorNum = parseFloat(valorFinal);
-                let clickEvt = !isNaN(valorNum) ? `onclick="seleccionarValorManual('${data.targetId}', ${valorNum})"` : "";
-                let trCls = !isNaN(valorNum) ? "cursor-pointer hover:bg-secondary/40 transition group" : "hover:bg-grayLight";
-                let btnHtml = !isNaN(valorNum) ? `<div class="opacity-0 group-hover:opacity-100 absolute right-4 text-primary text-xs font-bold bg-white px-2 py-1 rounded shadow-sm">Seleccionar</div>` : "";
-                
-                let tds = fila.map((celda, i) => {
-                    let val = (typeof celda === 'number' && i > 0) ? `$${formatNumber(celda)}` : celda;
-                    let fontClass = (i === fila.length - 1 && !isNaN(valorNum)) ? "font-bold text-primary" : "font-medium text-gray-700";
-                    return `<td class="p-4 border-t border-secondary/30 relative whitespace-nowrap ${fontClass}">${val} ${i === fila.length -1 ? btnHtml : ''}</td>`;
-                }).join('');
-                return `<tr ${clickEvt} class="${trCls}">${tds}</tr>`;
-            }).join('');
-
-            document.getElementById('modal-tabla-contenido').innerHTML = `<thead class="bg-grayLight/80 sticky top-0 backdrop-blur-sm shadow-sm"><tr>${thead}</tr></thead><tbody class="divide-y divide-secondary/30">${tbody}</tbody>`;
-            document.getElementById('modal-tablas').classList.remove('hidden');
-        }
-
-        function cerrarModal() {
-            document.getElementById('modal-tablas').classList.add('hidden');
-        }
-
-        function seleccionarValorManual(field, valorNum) {
-            activarEdicion(field);
-            const inputEl = document.getElementById(`desc-${field}`);
-            inputEl.value = formatNumber(valorNum);
-            cerrarModal();
-            calcularTotalDescuentos();
-        }
-
-        // --- 6. GESTIÓN DE DEDUCCIONES ---
-        let manualFlags = {
-            'estudio': false, 'buro': false, 'mutuo_personal': false, 'cancelacion': false, 'derechocanc': false, 'registrales': false, 'mutuo': false, 
-            'fijos-hipo': false, 'valuo': false, 'acciones': false, 'primera-cuota': false, 'adicionales': false
-        };
-
-        function activarEdicion(field) {
-            manualFlags[field] = true;
-            document.getElementById(`txt-${field}`).classList.add('hidden');
-            document.getElementById(`btn-${field}`).classList.add('hidden');
-            const inputEl = document.getElementById(`desc-${field}`);
-            inputEl.classList.remove('hidden');
-            inputEl.focus();
-        }
-
-        function reiniciarDescuentos() {
-            for (let key in manualFlags) { 
-                manualFlags[key] = false; 
-                document.getElementById(`txt-${key}`).classList.remove('hidden');
-                document.getElementById(`btn-${key}`).classList.remove('hidden');
-                document.getElementById(`desc-${key}`).classList.add('hidden');
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.menu-container')) {
+                document.querySelectorAll('.menu-dropdown').forEach(m => m.classList.remove('show'));
             }
-            document.getElementById('desc-adicionales').value = "";
-            document.getElementById('desc-valuo').value = "";
-            document.getElementById('chk-valuo').checked = false;
-            document.getElementById('chk-cancelacion').checked = false;
-            document.getElementById('chk-derecho-canc').checked = false;
-            document.getElementById('chk-primera-cuota').checked = false;
-            recalcularDescuentos();
+        });
+
+        function showToast(message) {
+            const toast = document.getElementById("toast");
+            toast.innerText = message;
+            toast.classList.add("show");
+            setTimeout(() => toast.classList.remove("show"), 2500);
         }
 
-        function actualizarCampo(field, valorAuto) {
-            const input = document.getElementById(`desc-${field}`);
-            const span = document.getElementById(`txt-${field}`);
-            if (!manualFlags[field]) {
-                input.value = formatNumber(valorAuto);
-                span.innerText = `$${formatNumber(valorAuto)}`;
-            } else {
-                span.innerText = `$${formatNumber(parseNumber(input.value))}`;
-            }
+        function saveData(reRender = true) {
+            appData.items.sort((a, b) => {
+                if (a.isPinned === b.isPinned) return b.createdAt - a.createdAt; 
+                return a.isPinned ? -1 : 1;
+            });
+            localStorage.setItem('proyectoWebV10', JSON.stringify(appData));
+            if(reRender) renderItems();
         }
 
-        function recalcularDescuentos() {
-            const monto = parseNumber(document.getElementById('monto').value);
-            document.getElementById('desc-monto-ref').innerText = `$${formatNumber(monto)}`;
+        // --- SISTEMA DE GESTIÓN DE TEXTOS ---
+        function updateField(itemId, field, element) {
+            let val = element.innerText.trim();
+            const item = appData.items.find(i => i.id === itemId);
+            item[field] = val;
+            saveData(false);
+            if(!val) element.innerHTML = '';
+        }
+
+        function updateCategoryTitle(itemId, catId, element) {
+            let val = element.innerText.trim();
+            const item = appData.items.find(i => i.id === itemId);
+            const cat = item.categories.find(c => c.id === catId);
+            cat.title = val;
+            saveData(false);
+            if(!val) element.innerHTML = '';
+        }
+
+        function formatInputDate(input, itemId) {
+            let val = input.value.replace(/\D/g, ''); 
+            let formatted = '';
+            if (val.length > 0) formatted += val.substring(0, 2);
+            if (val.length > 2) formatted += '/' + val.substring(2, 4);
+            if (val.length > 4) formatted += '/' + val.substring(4, 8);
             
-            // Obtener monto base específico para cancelación (si fue ingresado en Calculador de Cuota)
-            const montoCancRaw = document.getElementById('monto-cancelacion-base') ? parseNumber(document.getElementById('monto-cancelacion-base').value) : 0;
-            const montoParaCancelacion = montoCancRaw > 0 ? montoCancRaw : monto;
+            input.value = formatted;
+            const item = appData.items.find(i => i.id === itemId);
+            item.date = formatted;
+            saveData(false);
             
-            if(monto === 0 && montoCancRaw === 0) {
-                let campos = ['estudio', 'buro', 'mutuo_personal', 'cancelacion', 'derechocanc', 'registrales', 'mutuo', 'fijos-hipo', 'valuo', 'acciones', 'primera-cuota', 'adicionales'];
-                campos.forEach(c => actualizarCampo(c, 0));
-                calcularTotalDescuentos();
-                return;
+            if(document.getElementById('mainMonthFilter').value !== '') renderItems(); 
+        }
+
+        function formatInputAmount(input, itemId) {
+            let val = input.value.replace(/\D/g, '');
+            let item = appData.items.find(i => i.id === itemId);
+            if (val === '') { 
+                input.value = ''; 
+                item.amount = ''; 
+                saveData(false);
+                return; 
             }
+            let num = parseInt(val, 10) / 100;
+            let formatted = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
+            input.value = formatted;
+            item.amount = formatted;
+            saveData(false);
+        }
 
-            let pctEstudio = monto > 50000 ? 0.005 : (monto > 10000 ? 0.0075 : (monto > 0 ? 0.01 : 0));
-            actualizarCampo('estudio', (monto * pctEstudio) * 1.13);
+        // --- FUNCIONES PRINCIPALES ---
+        function addClient() {
+            appData.items.unshift({
+                id: 'item_' + Date.now(),
+                createdAt: Date.now(),
+                isPinned: false,
+                stateId: appData.currentStateView,
+                previousState: null,
+                name: '',
+                date: '',
+                amount: '',
+                subtitle: '',
+                isCollapsed: false, // Ahora al crear inicia abierto
+                categories: []
+            });
+            saveData();
+            showToast("Registro agregado");
+        }
 
-            const numPersonas = parseInt(document.getElementById('num-personas-buro').value) || 0;
-            actualizarCampo('buro', numPersonas * 1.98);
+        function toggleMenu(itemId) {
+            const menu = document.getElementById(`menu_${itemId}`);
+            const isShowing = menu.classList.contains('show');
+            document.querySelectorAll('.menu-dropdown').forEach(m => m.classList.remove('show'));
+            if (!isShowing) menu.classList.add('show');
+        }
 
-            let mutuoPerTotal = 0;
-            if (monto <= 999) mutuoPerTotal = 28.25; 
-            else if (monto <= 2000) mutuoPerTotal = 33.90; 
-            else if (monto <= 3000) mutuoPerTotal = 39.55; 
-            else if (monto <= 4000) mutuoPerTotal = 45.20; 
-            else if (monto <= 5000) mutuoPerTotal = 50.85; 
-            else if (monto <= 6000) mutuoPerTotal = 56.50; 
-            else if (monto <= 7000) mutuoPerTotal = 62.15; 
-            else if (monto <= 8000) mutuoPerTotal = 67.80; 
-            else if (monto <= 9000) mutuoPerTotal = 73.45; 
-            else if (monto <= 10000) mutuoPerTotal = 79.10; 
-            else if (monto <= 11000) mutuoPerTotal = 84.75; 
-            else if (monto <= 12000) mutuoPerTotal = 90.40; 
-            else if (monto <= 13000) mutuoPerTotal = 96.05; 
-            else if (monto <= 14000) mutuoPerTotal = 101.70; 
-            else if (monto <= 15000) mutuoPerTotal = 107.35; 
-            else if (monto <= 16000) mutuoPerTotal = 113.00; 
-            else if (monto <= 17000) mutuoPerTotal = 118.65; 
-            else if (monto <= 18000) mutuoPerTotal = 124.30; 
-            else if (monto <= 19000) mutuoPerTotal = 129.95; 
-            else if (monto <= 20000) mutuoPerTotal = 135.60; 
-            else mutuoPerTotal = monto > 0 ? 141.25 : 0;
-            actualizarCampo('mutuo_personal', mutuoPerTotal);
+        function moveClient(itemId, newStateId) {
+            const item = appData.items.find(i => i.id === itemId);
+            if (newStateId === 's_5' && item.stateId !== 's_5') item.previousState = item.stateId;
+            item.stateId = newStateId;
+            const stateName = statesConfig.find(s => s.id === newStateId).name;
+            saveData();
+            showToast(`Movido a ${stateName}`);
+        }
 
-            // Cancelación (Usando montoParaCancelacion)
-            const chkCancelacion = document.getElementById('chk-cancelacion').checked;
-            let cancelacionTotal = 0;
-            if (chkCancelacion && montoParaCancelacion > 0) {
-                if (montoParaCancelacion <= 10000) cancelacionTotal = 45.20; 
-                else if (montoParaCancelacion <= 20000) cancelacionTotal = 56.50; 
-                else if (montoParaCancelacion <= 30000) cancelacionTotal = 67.80; 
-                else if (montoParaCancelacion <= 40000) cancelacionTotal = 79.10; 
-                else if (montoParaCancelacion <= 50000) cancelacionTotal = 90.40; 
-                else cancelacionTotal = 101.70;
+        function togglePin(itemId) {
+            const item = appData.items.find(i => i.id === itemId);
+            item.isPinned = !item.isPinned;
+            saveData();
+            showToast(item.isPinned ? "Fijado arriba 📌" : "Desanclado");
+        }
+
+        function deleteClient(itemId) {
+            if(confirm("¿Eliminar este registro permanentemente?")) {
+                appData.items = appData.items.filter(i => i.id !== itemId);
+                saveData();
+                showToast("Eliminado");
             }
-            actualizarCampo('cancelacion', cancelacionTotal);
+        }
 
-            // Derecho Cancelación (Usando montoParaCancelacion)
-            const chkDerechoCanc = document.getElementById('chk-derecho-canc').checked;
-            let derechoCancTotal = 0;
-            if (chkDerechoCanc && montoParaCancelacion > 0) {
-                if (montoParaCancelacion <= 9000) {
-                    derechoCancTotal = 8.91;
-                } else {
-                    derechoCancTotal = 8.91 + (Math.ceil((montoParaCancelacion - 9000) / 100) * 0.13);
+        function toggleCollapse(itemId) {
+            const item = appData.items.find(i => i.id === itemId);
+            item.isCollapsed = !item.isCollapsed;
+            saveData();
+        }
+
+        // --- CHECKLISTS Y CATEGORÍAS ---
+        function addCategory(itemId) {
+            const input = document.getElementById(`new_cat_${itemId}`);
+            if (!input.value.trim()) return;
+            const item = appData.items.find(i => i.id === itemId);
+            item.categories.push({ id: 'c_' + Date.now(), title: input.value.trim(), tasks: [], isCatCollapsed: false });
+            saveData();
+        }
+
+        function toggleCategoryVisibility(itemId, catId) {
+            const item = appData.items.find(i => i.id === itemId);
+            const cat = item.categories.find(c => c.id === catId);
+            cat.isCatCollapsed = !cat.isCatCollapsed;
+            saveData(); // Recarga para aplicar clases CSS
+        }
+
+        function addTask(itemId, catId) {
+            const input = document.getElementById(`new_task_${itemId}_${catId}`);
+            if (!input.value.trim()) return;
+            const item = appData.items.find(i => i.id === itemId);
+            const cat = item.categories.find(c => c.id === catId);
+            cat.tasks.push({ id: 't_' + Date.now(), text: input.value.trim(), done: false });
+            saveData();
+        }
+
+        function toggleTask(itemId, catId, taskId) {
+            const item = appData.items.find(i => i.id === itemId);
+            const cat = item.categories.find(c => c.id === catId);
+            const task = cat.tasks.find(t => t.id === taskId);
+            task.done = !task.done;
+            saveData(); 
+        }
+
+        function updateTaskText(itemId, catId, taskId, val) {
+            const item = appData.items.find(i => i.id === itemId);
+            const cat = item.categories.find(c => c.id === catId);
+            const task = cat.tasks.find(t => t.id === taskId);
+            task.text = val;
+            saveData(false);
+        }
+
+        // --- RENDERIZADO ---
+        function setView(stateId) {
+            appData.currentStateView = stateId;
+            saveData();
+        }
+
+        function calculateProgress(item) {
+            let total = 0; let done = 0;
+            item.categories.forEach(c => { c.tasks.forEach(t => { total++; if(t.done) done++; }); });
+            return total === 0 ? 0 : (done / total) * 100;
+        }
+
+        function renderItems() {
+            document.getElementById('statusBar').innerHTML = statesConfig.map(s => `
+                <button class="tab-btn ${appData.currentStateView === s.id ? 'active' : ''}" data-state="${s.id}" onclick="setView('${s.id}')">
+                    ${s.name}
+                </button>
+            `).join('');
+
+            const container = document.getElementById('itemsContainer');
+            const monthFilter = document.getElementById('mainMonthFilter').value;
+            
+            const filteredItems = appData.items.filter(i => {
+                const matchState = i.stateId === appData.currentStateView;
+                let matchMonth = true;
+                if (monthFilter !== '') {
+                    const dateParts = i.date.split('/');
+                    matchMonth = (dateParts.length === 3 && dateParts[1] === monthFilter);
                 }
-            }
-            actualizarCampo('derechocanc', derechoCancTotal);
-
-            actualizarCampo('registrales', (monto / 1000) * 3.80);
-
-            let mutuoHipoTotal = 0;
-            if (monto <= 10000) mutuoHipoTotal = 84.75; 
-            else if (monto <= 20000) mutuoHipoTotal = 113.00; 
-            else if (monto <= 30000) mutuoHipoTotal = 141.25; 
-            else if (monto <= 40000) mutuoHipoTotal = 169.50; 
-            else if (monto <= 50000) mutuoHipoTotal = 197.75; 
-            else mutuoHipoTotal = monto > 0 ? 226.00 : 0;
-            actualizarCampo('mutuo', mutuoHipoTotal);
-
-            actualizarCampo('fijos-hipo', monto > 0 ? 17.72 : 0);
-
-            const chkValuo = document.getElementById('chk-valuo').checked;
-            if(!manualFlags['valuo']) actualizarCampo('valuo', (chkValuo && monto > 0) ? 150.00 : 0.00); 
-
-            // Acciones redondeadas al entero superior (APROXIMAR.MAS)
-            let pctAcciones = monto > 50000 ? 0.0075 : (monto > 10000 ? 0.01 : (monto > 0 ? 0.015 : 0));
-            actualizarCampo('acciones', Math.ceil(monto * pctAcciones));
-
-            const chkPrimera = document.getElementById('chk-primera-cuota').checked;
-            if(!manualFlags['primera-cuota']){
-                const { totalCuota } = calcularCuota();
-                actualizarCampo('primera-cuota', (chkPrimera && monto > 0) ? totalCuota : 0);
-            }
-            
-            actualizarCampo('adicionales', parseNumber(document.getElementById('desc-adicionales').value));
-            calcularTotalDescuentos();
-        }
-
-        function calcularTotalDescuentos() {
-            let camposHipotecarios = ['estudio', 'buro', 'cancelacion', 'derechocanc', 'registrales', 'mutuo', 'fijos-hipo', 'valuo', 'acciones', 'primera-cuota', 'adicionales'];
-            let camposPersonales = ['estudio', 'buro', 'mutuo_personal', 'acciones', 'primera-cuota', 'adicionales'];
-            let idsActivos = tipoDeduccionActual === 'hipotecaria' ? camposHipotecarios : camposPersonales;
-            
-            let suma = 0;
-            for (let key in manualFlags) {
-                const inputVal = parseNumber(document.getElementById(`desc-${key}`).value);
-                document.getElementById(`txt-${key}`).innerText = `$${formatNumber(inputVal)}`;
-                if(idsActivos.includes(key)) suma += inputVal;
-            }
-            
-            const monto = parseNumber(document.getElementById('monto').value);
-            const desembolso = monto > 0 ? (monto - suma) : 0;
-            
-            document.getElementById('desc-total-sum').innerText = `$${formatNumber(suma)}`;
-            document.getElementById('desc-desembolso').innerText = `$${formatNumber(desembolso)}`;
-        }
-
-        // --- 7. EXTRAS (CÁLCULOS DE FECHAS) ---
-        function calcFutureDate() {
-            let days = parseInt(document.getElementById('ext-days').value) || 0;
-            let weeks = parseInt(document.getElementById('ext-weeks').value) || 0;
-            let months = parseInt(document.getElementById('ext-months').value) || 0;
-            let years = parseInt(document.getElementById('ext-years').value) || 0;
-
-            let d = new Date(); 
-            d.setFullYear(d.getFullYear() + years);
-            d.setMonth(d.getMonth() + months);
-            d.setDate(d.getDate() + days + (weeks * 7));
-
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            document.getElementById('res-future-date').innerText = d.toLocaleDateString('es-ES', options);
-        }
-
-        function calcElapsedTime() {
-            let inputDateStr = document.getElementById('ext-past-date').value;
-            if(!inputDateStr) {
-                document.getElementById('res-elapsed').innerText = "-";
-                return;
-            }
-            let past = new Date(inputDateStr + 'T00:00:00');
-            let today = new Date();
-            today.setHours(0,0,0,0);
-
-            if (past > today) {
-                document.getElementById('res-elapsed').innerText = "La fecha no debe ser futura";
-                return;
-            }
-
-            let years = today.getFullYear() - past.getFullYear();
-            let months = today.getMonth() - past.getMonth();
-            let days = today.getDate() - past.getDate();
-
-            if (days < 0) {
-                months--;
-                let prevMonth = new Date(today.getFullYear(), today.getMonth(), 0);
-                days += prevMonth.getDate();
-            }
-            if (months < 0) {
-                years--;
-                months += 12;
-            }
-
-            document.getElementById('res-elapsed').innerText = `${years} años, ${months} meses, ${days} días`;
-        }
-
-        function calcDaysRemaining() {
-            let inputDateStr = document.getElementById('ext-future-date').value;
-            if(!inputDateStr) {
-                document.getElementById('res-remaining').innerText = "0";
-                return;
-            }
-            let target = new Date(inputDateStr + 'T00:00:00');
-            let today = new Date();
-            today.setHours(0,0,0,0);
-            
-            let diffTime = target - today;
-            let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            
-            if (diffDays < 0) diffDays = 0; 
-            
-            document.getElementById('res-remaining').innerText = diffDays;
-        }
-
-        function calcAge() {
-            let inputDateStr = document.getElementById('ext-birth-date').value;
-            if(!inputDateStr) {
-                document.getElementById('res-age').innerText = "0";
-                return;
-            }
-            let birth = new Date(inputDateStr + 'T00:00:00');
-            let today = new Date();
-            today.setHours(0,0,0,0);
-            
-            let age = today.getFullYear() - birth.getFullYear();
-            let m = today.getMonth() - birth.getMonth();
-            if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
-                age--;
-            }
-            if(age < 0) age = 0;
-            
-            document.getElementById('res-age').innerText = age;
-        }
-
-        // --- PREPARACIÓN DE IMPRESIÓN ---
-        // Dejamos que el navegador controle la escala desde Ctrl+P.
-        // Esto evita un zoom previo que reduzca demasiado el contenido.
-        // La pestaña activa sigue siendo la única que se imprime.
-        function prepararImpresion() {
-            const activeTab = document.querySelector('.tab-content:not(.hidden)');
-            if (!activeTab) return;
-
-            activeTab.classList.add('print-fit');
-            activeTab.style.removeProperty('--print-zoom');
-        }
-
-        function limpiarImpresion() {
-            document.querySelectorAll('.tab-content.print-fit').forEach(tab => {
-                tab.classList.remove('print-fit');
-                tab.style.removeProperty('--print-zoom');
+                return matchState && matchMonth;
             });
+
+            if (filteredItems.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding:3rem; color:var(--text-muted);">
+                    Aún no hay anotaciones aquí.
+                </div>`;
+                return;
+            }
+
+            container.innerHTML = filteredItems.map(item => {
+                const progress = calculateProgress(item);
+                
+                const moveOptionsHtml = statesConfig.map(s => {
+                    if(s.id === item.stateId) return '';
+                    return `<button class="menu-item" onclick="moveClient('${item.id}', '${s.id}')">↳ Mover a ${s.name}</button>`;
+                }).join('');
+
+                const checklists = item.categories.map(cat => `
+                    <div class="category ${cat.isCatCollapsed ? 'collapsed' : ''}" style="margin-bottom:1.5rem;">
+                        <div class="cat-header-row">
+                            <span class="cat-toggle-btn" onclick="toggleCategoryVisibility('${item.id}', '${cat.id}')">▼</span>
+                            <span style="color:#cbd5e1; font-size:1.1rem;">❖</span> 
+                            <span class="clean-input-title" style="font-size:0.95rem; display:inline-block; max-width:80%;" data-placeholder="Título de categoría" contenteditable="true" onblur="updateCategoryTitle('${item.id}', '${cat.id}', this)">${cat.title}</span>
+                        </div>
+                        <ul class="task-list">
+                            ${cat.tasks.map(task => `
+                                <li class="task-item ${task.done ? 'done' : ''}">
+                                    <input type="checkbox" ${task.done ? 'checked' : ''} onchange="toggleTask('${item.id}', '${cat.id}', '${task.id}')">
+                                    <input class="task-input" placeholder="Descripción de tarea" value="${task.text}" oninput="updateTaskText('${item.id}', '${cat.id}', '${task.id}', this.value)">
+                                </li>
+                            `).join('')}
+                        </ul>
+                        <div class="add-input-group">
+                            <input type="text" class="clean-add-input" id="new_task_${item.id}_${cat.id}" placeholder="Nueva tarea..." onkeypress="if(event.key==='Enter') addTask('${item.id}', '${cat.id}')">
+                            <button style="border:none; background:#f1f5f9; width:34px; height:34px; border-radius:8px; font-weight:bold; cursor:pointer;" onclick="addTask('${item.id}', '${cat.id}')">＋</button>
+                        </div>
+                    </div>
+                `).join('');
+                
+                let originBadgeHtml = '';
+                if (item.stateId === 's_5' && item.previousState) {
+                    const prevStateObj = statesConfig.find(s => s.id === item.previousState);
+                    originBadgeHtml = `<div class="origin-badge bg-${item.previousState}">Proviene de: ${prevStateObj ? prevStateObj.name : 'Desconocido'}</div>`;
+                }
+
+                return `
+                    <div class="card ${item.stateId} ${item.isCollapsed ? 'collapsed' : ''} ${item.isPinned ? 'is-pinned' : ''}" id="${item.id}">
+                        <div class="pinned-icon">📌</div>
+                        <div class="card-header">
+                            <div class="menu-container">
+                                <button class="menu-btn" onclick="toggleMenu('${item.id}')">⋮</button>
+                                <div class="menu-dropdown" id="menu_${item.id}">
+                                    <button class="menu-item" onclick="togglePin('${item.id}')">${item.isPinned ? 'Desanclar' : '📌 Anclar arriba'}</button>
+                                    ${moveOptionsHtml}
+                                    <button class="menu-item" style="color:#ef4444;" onclick="deleteClient('${item.id}')">🗑 Eliminar</button>
+                                </div>
+                            </div>
+
+                            ${originBadgeHtml}
+
+                            <div class="card-inputs">
+                                <span class="clean-input-title" data-placeholder="Nombre del cliente..." contenteditable="true" onblur="updateField('${item.id}', 'name', this)">${item.name}</span>
+                                <span class="dot-sep">•</span>
+                                <input class="meta-input date-input" inputmode="numeric" placeholder="dd/mm/aaaa" value="${item.date}" oninput="formatInputDate(this, '${item.id}')">
+                                <span class="dot-sep">•</span>
+                                <input class="meta-input" inputmode="decimal" placeholder="$0.00" value="${item.amount}" oninput="formatInputAmount(this, '${item.id}')">
+                            </div>
+                            <span class="subtitle-input" data-placeholder="Descripción o categoría..." contenteditable="true" onblur="updateField('${item.id}', 'subtitle', this)">${item.subtitle}</span>
+                            
+                            <div class="progress-bar"><div class="progress-fill" style="width: ${progress}%"></div></div>
+                            <div class="collapse-toggle" onclick="toggleCollapse('${item.id}')">▼</div>
+                        </div>
+
+                        <div class="checklist-panel">
+                            ${checklists}
+                            <div class="add-input-group" style="padding-left:0; border-top:1px dashed var(--border); padding-top:1rem; margin-top:1rem;">
+                                <input type="text" class="clean-add-input" id="new_cat_${item.id}" placeholder="Nueva categoría (Ej: Esperando Docs)..." onkeypress="if(event.key==='Enter') addCategory('${item.id}')">
+                                <button style="background:var(--text-main); color:white; border:none; padding:0.5rem 1rem; border-radius:8px; font-weight:600; cursor:pointer;" onclick="addCategory('${item.id}')">Añadir</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
-        window.addEventListener('beforeprint', prepararImpresion);
-        window.addEventListener('afterprint', limpiarImpresion);
+        // --- SISTEMA DE CALENDARIO ---
+        let calDate = new Date();
+        let selectedDayForDetails = null; 
 
-        // Inicialización General
-        window.onload = function() {
-            calcularCuota();
-            calcFutureDate();
-            calcElapsedTime();
-            calcDaysRemaining();
-            calcAge();
+        function openCalendar() {
+            document.getElementById('calendarModal').style.display = 'flex';
+            calDate = new Date(); 
+            selectedDayForDetails = null;
+            document.getElementById('dayDetailsPanel').style.display = 'none';
+            renderCalendar();
+        }
 
-            // Inicializar la cabecera de impresión con la pestaña activa.
-            const activeButton = document.querySelector('.tab-btn.active-tab');
-            const printTitle = document.getElementById('print-header-title');
-            const printDate = document.getElementById('print-header-date');
-            if (activeButton && printTitle) {
-                printTitle.innerText = activeButton.querySelector('span').innerText;
+        function closeCalendar(force = false) {
+            if(force || event.target.id === 'calendarModal') {
+                document.getElementById('calendarModal').style.display = 'none';
             }
-            if (printDate) {
-                printDate.innerText = new Date().toLocaleDateString('es-SV', {
-                    day: '2-digit', month: '2-digit', year: 'numeric'
-                });
+        }
+
+        function changeMonth(dir) {
+            calDate.setMonth(calDate.getMonth() + dir);
+            selectedDayForDetails = null;
+            document.getElementById('dayDetailsPanel').style.display = 'none';
+            renderCalendar();
+        }
+        
+        function jumpToMonth(val) {
+            if(!val) return;
+            const [year, month] = val.split('-');
+            calDate.setFullYear(parseInt(year));
+            calDate.setMonth(parseInt(month) - 1);
+            selectedDayForDetails = null;
+            document.getElementById('dayDetailsPanel').style.display = 'none';
+            renderCalendar();
+        }
+
+        function jumpToItem(itemId, stateId) {
+            closeCalendar(true);
+            appData.currentStateView = stateId;
+            document.getElementById('mainMonthFilter').value = ''; 
+            
+            const item = appData.items.find(i => i.id === itemId);
+            item.isCollapsed = false;
+            saveData(true);
+
+            setTimeout(() => {
+                const el = document.getElementById(itemId);
+                if(el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    el.classList.add('highlight');
+                    setTimeout(() => el.classList.remove('highlight'), 1500);
+                }
+            }, 100);
+        }
+
+        function toggleDayDetails(dateStr, encodedJson) {
+            const panel = document.getElementById('dayDetailsPanel');
+            if (selectedDayForDetails === dateStr) {
+                panel.style.display = 'none';
+                selectedDayForDetails = null;
+                renderCalendar(); 
+                return;
             }
-        };
+
+            selectedDayForDetails = dateStr;
+            const items = JSON.parse(decodeURIComponent(encodedJson));
+            
+            let html = `<h4 style="margin-bottom:0.8rem; font-size:0.9rem; color:var(--text-main);">Anotaciones del ${dateStr}:</h4>`;
+            items.forEach(i => {
+                const stateName = statesConfig.find(s => s.id === i.stateId).name;
+                html += `
+                    <div class="detail-card ${i.stateId}">
+                        <div style="font-weight:700; font-size:0.95rem; margin-bottom:0.2rem;">${i.name || 'Sin nombre'}</div>
+                        <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.6rem;">${stateName} • ${i.amount || 'Sin monto'}</div>
+                        <button class="btn-jump" onclick="jumpToItem('${i.id}', '${i.stateId}')">Ir al registro ➔</button>
+                    </div>
+                `;
+            });
+            
+            panel.innerHTML = html;
+            panel.style.display = 'block';
+            renderCalendar(); 
+        }
+
+        function renderCalendar() {
+            const year = calDate.getFullYear();
+            const month = calDate.getMonth();
+            
+            document.getElementById('monthPicker').value = `${year}-${String(month+1).padStart(2, '0')}`;
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const today = new Date();
+
+            let html = `<div class="day-name">Dom</div><div class="day-name">Lun</div><div class="day-name">Mar</div><div class="day-name">Mié</div><div class="day-name">Jue</div><div class="day-name">Vie</div><div class="day-name">Sáb</div>`;
+            for (let i = 0; i < firstDay; i++) html += `<div></div>`;
+
+            for (let i = 1; i <= daysInMonth; i++) {
+                const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === i;
+                const targetDateStr = `${String(i).padStart(2, '0')}/${String(month+1).padStart(2, '0')}/${year}`;
+                const matchItems = appData.items.filter(item => item.date === targetDateStr);
+                const isActiveToggle = (selectedDayForDetails === targetDateStr);
+                
+                let dotHtml = '';
+                let clickAction = '';
+                
+                if (matchItems.length > 0) {
+                    dotHtml = `<div class="dots-container">`;
+                    matchItems.slice(0, 3).forEach(m => { dotHtml += `<div class="dot-marker ${m.stateId}"></div>`; });
+                    dotHtml += `</div>`;
+                    
+                    const encoded = encodeURIComponent(JSON.stringify(matchItems));
+                    clickAction = `onclick="toggleDayDetails('${targetDateStr}', '${encoded}')"`;
+                }
+
+                html += `
+                    <div class="day-cell ${isToday ? 'today' : ''} ${isActiveToggle ? 'active-toggle' : ''}" ${clickAction}>
+                        ${i}
+                        ${dotHtml}
+                    </div>
+                `;
+            }
+            document.getElementById('calGrid').innerHTML = html;
+        }
+
+        renderItems();
     </script>
 </body>
 </html>
